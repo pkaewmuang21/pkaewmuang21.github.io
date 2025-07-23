@@ -1,317 +1,1845 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกประวัติผู้รับบริการ - การบินกรุงเทพฯ</title>
-	<!-- Firebase App (core) -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<!-- Firebase Database -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'ba-blue': '#1e40af',
-                        'ba-light-blue': '#3b82f6',
-                        'ba-turquoise': '#06b6d4',
-                        'ba-light-turquoise': '#67e8f9'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
-        body {
-            font-family: 'Sarabun', sans-serif;
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #1e40af 0%, #06b6d4 100%);
-        }
-        .form-shadow {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        .input-focus:focus {
-            border-color: #06b6d4;
-            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
-        }
-        .loading {
-            display: none;
-        }
-        .loading.show {
-            display: inline-block;
-        }
-        .success-message {
-            display: none;
-        }
-        .success-message.show {
-            display: block;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบบันทึกประวัติการรักษาพยาบาล - ห้องพยาบาลการบินกรุงเทพฯ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: #f0f9ff;
+    }
+    
+    .bg-turquoise {
+      background-color: #40E0D0;
+    }
+    
+    .bg-turquoise-light {
+      background-color: #AFEEEE;
+    }
+    
+    .text-turquoise {
+      color: #40E0D0;
+    }
+    
+    .border-turquoise {
+      border-color: #40E0D0;
+    }
+    
+    .bg-navy {
+      background-color: #0A2463;
+    }
+    
+    .text-navy {
+      color: #0A2463;
+    }
+    
+    .btn-primary {
+      background-color: #0A2463;
+      color: white;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary:hover {
+      background-color: #153a94;
+    }
+    
+    .btn-secondary {
+      background-color: #40E0D0;
+      color: #0A2463;
+      transition: all 0.3s;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #2ec4b6;
+    }
+    
+    .form-input:focus {
+      border-color: #40E0D0;
+      box-shadow: 0 0 0 3px rgba(64, 224, 208, 0.3);
+    }
+    
+    .tab {
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .tab.active {
+      background-color: #40E0D0;
+      color: #0A2463;
+      font-weight: 500;
+    }
+    
+    .tab:hover:not(.active) {
+      background-color: #AFEEEE;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .loader {
+      border-top-color: #40E0D0;
+      border-right-color: #40E0D0;
+      border-bottom-color: #40E0D0;
+      border-left-color: transparent;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-cyan-50 min-h-screen">
+<body>
+  <div class="min-h-screen flex flex-col">
     <!-- Header -->
-    <header class="gradient-bg text-white py-6 shadow-lg">
-        <div class="container mx-auto px-4">
-            <div class="flex items-center justify-center space-x-4">
-                <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                    </svg>
-                </div>
-                <div class="text-center">
-                    <h1 class="text-2xl font-bold">ระบบบันทึกประวัติผู้รับบริการ</h1>
-                    <p class="text-blue-100 text-sm">ห้องพยาบาล การบินกรุงเทพฯ สำนักงานใหญ่</p>
-                </div>
-            </div>
+    <header class="bg-navy text-white shadow-lg">
+      <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <div>
+            <h1 class="text-xl font-bold">ห้องพยาบาลการบินกรุงเทพฯ</h1>
+            <p class="text-xs text-turquoise">สำนักงานใหญ่</p>
+          </div>
         </div>
+        <div class="flex items-center">
+          <div class="text-right">
+            <p class="font-medium">เจ้าหน้าที่พยาบาล</p>
+            <p class="text-xs text-turquoise">ระบบบันทึกประวัติการรักษา</p>
+          </div>
+        </div>
+      </div>
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
-        <div class="max-w-4xl mx-auto">
-            <!-- Success Message -->
-            <div id="successMessage" class="success-message bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
-                    <span class="font-medium">บันทึกข้อมูลเรียบร้อยแล้ว!</span>
+    <main class="flex-grow container mx-auto px-4 py-6">
+      <!-- Dashboard -->
+      <div id="dashboard">
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-200 mb-6">
+          <div class="tab active px-4 py-2 rounded-t-lg" data-tab="newRecord">บันทึกข้อมูลใหม่</div>
+          <div class="tab px-4 py-2 rounded-t-lg" data-tab="searchRecord">ค้นหาประวัติ</div>
+          <div class="tab px-4 py-2 rounded-t-lg" data-tab="reports">รายงาน</div>
+        </div>
+
+        <!-- New Record Form -->   
+		<div id="newRecord" class="tab-content ">
+		<div  class="bg-white rounded-xl shadow-lg p-6 mb-8">
+
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
+				<h3 class="text-lg font-medium text-navy mb-3">ข้อมูลพนักงาน</h3>
+                <div class="mb-3">  </div>
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="employeeId">รหัสพนักงาน <span class="text-red-500">*</span></label>
+                  <input type="text" id="employeeId" name="employeeId" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                  <button type="button" id="searchEmployeeBtn" class="mt-1 text-sm text-turquoise hover:underline">ค้นหาข้อมูลพนักงาน</button>
                 </div>
-            </div>
-
-            <!-- Form Card -->
-            <div class="bg-white rounded-2xl form-shadow overflow-hidden">
-                <div class="bg-gradient-to-r from-ba-blue to-ba-turquoise p-6">
-                    <h2 class="text-xl font-semibold text-white text-center">แบบฟอร์มบันทึกข้อมูลผู้รับบริการ</h2>
+                
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-1" for="firstName">ชื่อ <span class="text-red-500">*</span></label>
+                    <input type="text" id="firstName" name="firstName" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                  </div>
+                  <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-1" for="lastName">นามสกุล <span class="text-red-500">*</span></label>
+                    <input type="text" id="lastName" name="lastName" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                  </div>
                 </div>
-
-                <form id="patientForm" class="p-8 space-y-6">
-                    <!-- Row 1: Employee ID and Department -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">รหัสพนักงาน *</label>
-                            <input type="text" id="employeeId" name="employeeId" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
-                                placeholder="กรอกรหัสพนักงาน">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">แผนก *</label>
-                            <input type="text" id="department" name="department" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
-                                placeholder="กรอกแผนก">
-                        </div>
-                    </div>
-
-                    <!-- Row 2: Name and Surname -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ *</label>
-                            <input type="text" id="firstName" name="firstName" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
-                                placeholder="กรอกชื่อ">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">สกุล *</label>
-                            <input type="text" id="lastName" name="lastName" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
-                                placeholder="กรอกนามสกุล">
-                        </div>
-                    </div>
-
-                    <!-- Row 3: Birth Date and Phone -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">วันเดือนปีเกิด *</label>
-                            <input type="date" id="birthDate" name="birthDate" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">เบอร์โทรศัพท์ *</label>
-                            <input type="tel" id="phone" name="phone" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
-                                placeholder="กรอกเบอร์โทรศัพท์">
-                        </div>
-                    </div>
-
-                    <!-- Row 4: Medical Conditions -->
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="department">แผนก <span class="text-red-500">*</span></label>
+                  <input type="text" id="department" name="department" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="birthdate">วันเดือนปีเกิด</label>
+                  <input type="date" id="birthdate" name="birthdate" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="phone">เบอร์โทรศัพท์</label>
+                  <input type="tel" id="phone" name="phone" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="congenitalDisease">โรคประจำตัว</label>
+                  <textarea id="congenitalDisease" name="congenitalDisease" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="allergies">แพ้ยา/แพ้อาหาร</label>
+                  <textarea id="allergies" name="allergies" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
+                </div>
+              </div>
+			</div>
+	
+        <div  class=" bg-white rounded-xl shadow-lg p-6 mb-8">
+		
+         
+          
+          <form id="medicalRecordForm">
+           	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
+             
+                
+              
+            
+                <h3 class="text-lg font-medium text-navy mb-3">ข้อมูลการรักษา</h3>
+                <div class="mb-3">   </div>
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="visitDate">วันที่รับบริการ <span class="text-red-500">*</span></label>
+                  <input type="datetime-local" id="visitDate" name="visitDate" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="esiTriage">ESI Triage <span class="text-red-500">*</span></label>
+                  <select id="esiTriage" name="esiTriage" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                    <option value="">-- เลือก --</option>
+                    <option value="1">1 - ต้องได้รับการรักษาทันที</option>
+                    <option value="2">2 - ภาวะฉุกเฉินมาก</option>
+                    <option value="3">3 - ภาวะฉุกเฉิน</option>
+                    <option value="4">4 - ภาวะกึ่งฉุกเฉิน</option>
+                    <option value="5">5 - ภาวะไม่ฉุกเฉิน</option>
+                  </select>
+                </div>
+               </div> 
+                <div class="mb-2">
+                  <label class="block text-gray-700 text-sm font-medium mb-1">Vital Signs</label>
+                  <div class="grid grid-cols-5 gap-1">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">โรคประจำตัว</label>
-                        <textarea id="medicalConditions" name="medicalConditions" rows="3"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
-                            placeholder="กรอกโรคประจำตัว (หากไม่มีให้ใส่ 'ไม่มี')"></textarea>
+                      <label class="block text-gray-700 text-xs mb-1" for="temperature">อุณหภูมิ (°C)</label>
+                      <input type="number" step="0.1" id="temperature" name="temperature" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="36.5">
                     </div>
-
-                    <!-- Row 5: Allergies -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">แพ้ยา/แพ้อาหาร</label>
-                        <textarea id="allergies" name="allergies" rows="3"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
-                            placeholder="กรอกข้อมูลการแพ้ยาหรือแพ้อาหาร (หากไม่มีให้ใส่ 'ไม่มี')"></textarea>
+                      <label class="block text-gray-700 text-xs mb-1" for="pulse">ชีพจร (ครั้ง/นาที)</label>
+                      <input type="number" id="pulse" name="pulse" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="80">
                     </div>
-
-                    <!-- Row 6: Customer Type -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">ประเภทลูกค้า *</label>
-                        <div class="flex space-x-6">
-                            <label class="flex items-center">
-                                <input type="radio" id="customerTypePG" name="customerType" value="PG" required
-                                    class="w-4 h-4 text-ba-turquoise border-gray-300 focus:ring-ba-turquoise">
-                                <span class="ml-2 text-sm text-gray-700">PG</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="radio" id="customerTypeNonPG" name="customerType" value="Non PG" required
-                                    class="w-4 h-4 text-ba-turquoise border-gray-300 focus:ring-ba-turquoise">
-                                <span class="ml-2 text-sm text-gray-700">Non PG</span>
-                            </label>
-                        </div>
+                      <label class="block text-gray-700 text-xs mb-1" for="respiration">การหายใจ (ครั้ง/นาที)</label>
+                      <input type="number" id="respiration" name="respiration" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="16">
                     </div>
-
-                    <!-- Submit Button -->
-                    <div class="pt-6">
-                        <button type="submit" id="submitBtn"
-                            class="w-full bg-gradient-to-r from-ba-blue to-ba-turquoise text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 transform hover:scale-[1.02] shadow-lg">
-                            <span id="submitText">บันทึกข้อมูล</span>
-                            <span id="loadingSpinner" class="loading">
-                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                กำลังบันทึก...
-                            </span>
-                        </button>
+                    <div>
+                      <label class="block text-gray-700 text-xs mb-1" for="bloodPressure">ความดันโลหิต (mmHg)</label>
+                      <input type="text" id="bloodPressure" name="bloodPressure" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="120/80">
                     </div>
-                </form>
+                    <div>
+                      <label class="block text-gray-700 text-xs mb-1" for="oxygenSaturation">SpO2 (%)</label>
+                      <input type="number" id="oxygenSaturation" name="oxygenSaturation" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="98">
+                    </div>
+                  </div>
+                </div>
+                 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="chiefComplaint">อาการสำคัญ <span class="text-red-500">*</span></label>
+                  <textarea id="chiefComplaint" name="chiefComplaint" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required></textarea>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="physicalExamination">การตรวจร่างกาย</label>
+                  <textarea id="physicalExamination" name="physicalExamination" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="diagnosis">การวินิจฉัย</label>
+                  <textarea id="diagnosis" name="diagnosis" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="treatment">การรักษา/ยาที่ให้</label>
+                  <!--<textarea id="treatment" name="treatment" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>-->
+				   <select id="treatment" name="treatment" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                    <option value="">-- เลือก --</option>
+                    <option value="consulted">ปรึกษาพยาบาล</option>
+                    <option value="selfMedication">สั่งจ่ายยาด้วยตนเอง</option>
+                    <option value="observeRoom">ใช้ห้องสังเกตอาการ</option>
+                    <option value="emergency">อุบัติเหตุ/ฉุกเฉิน</option>
+                    <option value="refer">ส่งต่อ/แนะนำ</option>
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="advice">คำแนะนำ</label>
+                  <textarea id="advice" name="advice" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1">การนัดติดตามอาการ</label>
+                  <div class="flex items-center space-x-4">
+                    <label class="inline-flex items-center">
+                      <input type="radio" name="followUp" value="Y" class="form-radio text-turquoise">
+                      <span class="ml-2">มี</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                      <input type="radio" name="followUp" value="N" class="form-radio text-turquoise" checked>
+                      <span class="ml-2">ไม่มี</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="block text-gray-700 text-sm font-medium mb-1" for="serviceType">ประเภทการให้บริการ <span class="text-red-500">*</span></label>
+                  <select id="serviceType" name="serviceType" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                    <option value="">-- เลือก --</option>
+                    <option value="consulted">ปรึกษาพยาบาล</option>
+                    <option value="selfMedication">สั่งจ่ายยาด้วยตนเอง</option>
+                    <option value="observeRoom">ใช้ห้องสังเกตอาการ</option>
+                    <option value="emergency">อุบัติเหตุ/ฉุกเฉิน</option>
+                    <option value="refer">ส่งต่อ/แนะนำ</option>
+                  </select>
+                </div>
+             
             </div>
+            
+          
+          </form>
+        </div>
 
-            <!-- Footer -->
-            <div class="text-center mt-8 text-gray-600">
-                <p class="text-sm">© 2024 การบินกรุงเทพฯ สำนักงานใหญ่ - ห้องพยาบาล</p>
+		<div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">📋 รายการยาทั้งหมด</h2>
+						 <div class="mt-6 flex justify-start">
+                <button onclick="addMedicine()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200">
+                    ➕ สั่งยา
+                </button>
+            </div>
+            </div>
+	
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ลำดับ</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อยา</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภท</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หน่วย</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หมายเหตุ</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="medicineTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Sample data -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">พาราเซตามอล</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">ยาแก้ปวด</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">50</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">เม็ด</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">สำหรับแก้ปวดหัว</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="editMedicine(0)" class="text-indigo-600 hover:text-indigo-900 mr-3">✏️ แก้ไข</button>
+                                <button onclick="deleteMedicine(0)" class="text-red-600 hover:text-red-900">🗑️ ลบ</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">แอสไพริน</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">ยาแก้ไข้</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">30</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">เม็ด</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">ลดไข้และแก้ปวด</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="editMedicine(1)" class="text-indigo-600 hover:text-indigo-900 mr-3">✏️ แก้ไข</button>
+                                <button onclick="deleteMedicine(1)" class="text-red-600 hover:text-red-900">🗑️ ลบ</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+					<br/>
             </div>
         </div>
+		<br/>
+		<div class="bg-white rounded-xl shadow-lg overflow-hidden">
+		  <div class="flex justify-center mt-6">
+              <button type="submit" class="btn-primary px-6 py-2 rounded-md">บันทึกข้อมูล</button>
+              <button type="reset" class="btn-secondary ml-4 px-6 py-2 rounded-md">ล้างข้อมูล</button>
+            </div>
+				<br/>
+		</div>
+		</div>
+        <!-- Search Record -->
+        <div id="searchRecord" class="tab-content hidden bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-xl font-bold text-navy mb-4">ค้นหาประวัติการรักษา</h2>
+          
+          <div class="mb-6">
+            <div class="flex space-x-4">
+              <div class="flex-grow">
+                <input type="text" id="searchInput" class="form-input w-full px-4 py-2 border rounded-md focus:outline-none" placeholder="ค้นหาด้วยรหัสพนักงาน, ชื่อ หรือนามสกุล">
+              </div>
+              <button id="searchBtn" class="btn-primary px-6 py-2 rounded-md">ค้นหา</button>
+            </div>
+          </div>
+          
+          <div id="searchResults" class="mt-4">
+            <p class="text-gray-500 text-center">กรุณาระบุข้อมูลที่ต้องการค้นหา</p>
+          </div>
+          
+          <div id="recordDetail" class="hidden mt-8 border-t pt-6">
+            <h3 class="text-lg font-medium text-navy mb-4">รายละเอียดประวัติการรักษา</h3>
+            <div id="recordDetailContent"></div>
+          </div>
+        </div>
+
+        <!-- Reports -->
+        <div id="reports" class="tab-content hidden bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-xl font-bold text-navy mb-4">รายงาน</h2>
+          
+          <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-gray-700 text-sm font-medium mb-1" for="reportType">ประเภทรายงาน</label>
+              <select id="reportType" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
+                <option value="daily">รายงานประจำวัน</option>
+                <option value="monthly">รายงานประจำเดือน</option>
+                <option value="serviceType">รายงานตามประเภทการให้บริการ</option>
+                <option value="department">รายงานตามแผนก</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-gray-700 text-sm font-medium mb-1" for="reportStartDate">วันที่เริ่มต้น</label>
+              <input type="date" id="reportStartDate" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
+            </div>
+            
+            <div>
+              <label class="block text-gray-700 text-sm font-medium mb-1" for="reportEndDate">วันที่สิ้นสุด</label>
+              <input type="date" id="reportEndDate" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
+            </div>
+          </div>
+          
+          <div class="flex justify-center mb-6">
+            <button id="generateReportBtn" class="btn-primary px-6 py-2 rounded-md">สร้างรายงาน</button>
+          </div>
+          
+          <div id="reportResults" class="mt-4">
+            <p class="text-gray-500 text-center">กรุณาเลือกประเภทรายงานและช่วงเวลาที่ต้องการ</p>
+          </div>
+          
+          <div class="mt-8">
+            <canvas id="reportChart" class="w-full h-64 hidden"></canvas>
+          </div>
+        </div>
+      </div>
     </main>
 
-    <script>
-	 // 1. Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyC5WWSxG9iLQMZqO057qZ-Q4EA19d3Q1eE",
-    authDomain: "pg-firstaid.firebaseapp.com",
-    databaseURL: "https://pg-firstaid-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "pg-firstaid",
-    storageBucket: "pg-firstaid.firebasestorage.app",
-    messagingSenderId: "85440797529",
-    appId: "1:85440797529:web:9e146646682f1190024a48"
-  };
+    <!-- Footer -->
+    <footer class="bg-navy text-white py-4">
+      <div class="container mx-auto px-4 text-center">
+        <p>&copy; 2023 ห้องพยาบาลการบินกรุงเทพฯ สำนักงานใหญ่</p>
+        <p class="text-xs text-turquoise mt-1">ระบบบันทึกประวัติการรักษาพยาบาล</p>
+      </div>
+    </footer>
+  </div>
 
-  // 2. เริ่มต้น firebase
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-  
-        document.getElementById('patientForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const submitText = document.getElementById('submitText');
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            const successMessage = document.getElementById('successMessage');
-            
-            // Show loading state
-            submitBtn.disabled = true;
-            submitText.style.display = 'none';
-            loadingSpinner.classList.add('show');
-            successMessage.classList.remove('show');
-            
-            // Collect form data
-            /*const formData = new FormData();
-            formData.append('employeeId', document.getElementById('employeeId').value);
-            formData.append('department', document.getElementById('department').value);
-            formData.append('firstName', document.getElementById('firstName').value);
-            formData.append('lastName', document.getElementById('lastName').value);
-            formData.append('birthDate', document.getElementById('birthDate').value);
-            formData.append('medicalConditions', document.getElementById('medicalConditions').value || 'ไม่มี');
-            formData.append('allergies', document.getElementById('allergies').value || 'ไม่มี');
-            formData.append('phone', document.getElementById('phone').value);
-            formData.append('customerType', document.querySelector('input[name="customerType"]:checked').value);
-            
-            try {
-                const response = await fetch('https://script.google.com/macros/s/AKfycbwTMbPj2byT8uISzkuEz-quJNZ-Iu77K2ZnDYew6JKTU6l1v8_H3h3OAqL7FLWw1b_sPg/exec', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (response.ok) {
-                    // Show success message
-                    successMessage.classList.add('show');
-                    
-                    // Reset form
-                    document.getElementById('patientForm').reset();
-                    
-                    // Scroll to top to show success message
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    
-                    // Hide success message after 5 seconds
-                    setTimeout(() => {
-                        successMessage.classList.remove('show');
-                    }, 5000);
-                } else {
-                    throw new Error('Network response was not ok');
-                }
-            } catch (error) {
-                alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
-                console.error('Error:', error);
-            } finally {
-                // Reset button state
-                submitBtn.disabled = false;
-                submitText.style.display = 'inline';
-                loadingSpinner.classList.remove('show');
-            }*/
-			
-			const formData = {
-			  employeeId: document.getElementById('employeeId').value,
-			  department: document.getElementById('department').value,
-			  firstName: document.getElementById('firstName').value,
-			  lastName: document.getElementById('lastName').value,
-			  birthDate: document.getElementById('birthDate').value,
-			  medicalConditions: document.getElementById('medicalConditions').value || 'ไม่มี',
-			  allergies: document.getElementById('allergies').value || 'ไม่มี',
-			  phone: document.getElementById('phone').value,
-			  customerType: document.querySelector('input[name="customerType"]:checked').value
-			};
+  <!-- Notification -->
+  <div id="notification" class="fixed top-4 right-4 max-w-md bg-white rounded-lg shadow-lg p-4 transform transition-transform duration-300 scale-0 z-50">
+    <div class="flex items-center">
+      <div id="notificationIcon" class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3"></div>
+      <div class="flex-grow">
+        <h4 id="notificationTitle" class="font-medium"></h4>
+        <p id="notificationMessage" class="text-sm text-gray-600"></p>
+      </div>
+      <button id="closeNotification" class="flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
+  </div>
 
-			// 4. บันทึกเข้า table `client`
-			const newClientRef = database.ref('client').push(); // สร้าง key ใหม่
-			newClientRef.set(formData)
-			  .then(() => {
-					successMessage.classList.add('show');
-                    
-                    // Reset form
-                    document.getElementById('patientForm').reset();
-                    
-                    // Scroll to top to show success message
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    
-                    // Hide success message after 5 seconds
-                    setTimeout(() => {
-                        successMessage.classList.remove('show');
-                    }, 5000);
-				  //alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
-				 submitBtn.disabled = false;
-                submitText.style.display = 'inline';
-                loadingSpinner.classList.remove('show');
-			  })
-			  .catch((error) => {
-				alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
-                console.error('Error:', error);
-			  });
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
+      <div class="loader w-12 h-12 border-4 rounded-full mb-4"></div>
+      <p id="loadingMessage" class="text-gray-700">กำลังประมวลผล...</p>
+    </div>
+  </div>
+
+  <script>
+    // Sample data for demonstration
+    const sampleData = {
+      employees: {
+        "E001": {
+          firstName: "สมชาย",
+          lastName: "ใจดี",
+          department: "ฝ่ายบริการลูกค้า",
+          birthdate: "1985-05-15",
+          phone: "0891234567",
+          congenitalDisease: "ความดันโลหิตสูง",
+          allergies: "แพ้ยาเพนนิซิลิน",
+          updatedAt: "2023-05-10T08:30:00.000Z"
+        },
+        "E002": {
+          firstName: "สมหญิง",
+          lastName: "รักเรียน",
+          department: "ฝ่ายบัญชี",
+          birthdate: "1990-10-20",
+          phone: "0872345678",
+          congenitalDisease: "",
+          allergies: "แพ้ถั่วลิสง",
+          updatedAt: "2023-05-12T10:15:00.000Z"
+        },
+        "E003": {
+          firstName: "วิชัย",
+          lastName: "สุขสบาย",
+          department: "ฝ่ายปฏิบัติการบิน",
+          birthdate: "1982-03-08",
+          phone: "0863456789",
+          congenitalDisease: "เบาหวาน",
+          allergies: "",
+          updatedAt: "2023-05-15T14:20:00.000Z"
+        },
+        "E004": {
+          firstName: "นภา",
+          lastName: "ฟ้าใส",
+          department: "ฝ่ายการตลาด",
+          birthdate: "1988-12-25",
+          phone: "0854567890",
+          congenitalDisease: "",
+          allergies: "",
+          updatedAt: "2023-05-18T09:45:00.000Z"
+        },
+        "E005": {
+          firstName: "ประสิทธิ์",
+          lastName: "มั่นคง",
+          department: "ฝ่ายซ่อมบำรุง",
+          birthdate: "1979-07-30",
+          phone: "0845678901",
+          congenitalDisease: "โรคหอบหืด",
+          allergies: "แพ้ฝุ่น",
+          updatedAt: "2023-05-20T11:30:00.000Z"
+        }
+      },
+      medicalRecords: {
+        "R001": {
+          id: "R001",
+          employeeId: "E001",
+          visitDate: "2023-05-10T08:30:00.000Z",
+          esiTriage: "3",
+          vitalSigns: {
+            temperature: "37.2",
+            pulse: "85",
+            respiration: "18",
+            bloodPressure: "140/90",
+            oxygenSaturation: "98"
+          },
+          chiefComplaint: "ปวดศีรษะ มีไข้เล็กน้อย",
+          physicalExamination: "ไม่พบความผิดปกติอื่น",
+          diagnosis: "ไข้หวัด",
+          treatment: "ให้ยาพาราเซตามอล 500 mg 1 เม็ด ทุก 6 ชั่วโมง",
+          advice: "พักผ่อนให้เพียงพอ ดื่มน้ำมากๆ",
+          followUp: "N",
+          serviceType: "selfMedication",
+          createdAt: "2023-05-10T08:45:00.000Z",
+          createdBy: "เจ้าหน้าที่พยาบาล"
+        },
+        "R002": {
+          id: "R002",
+          employeeId: "E002",
+          visitDate: "2023-05-12T10:15:00.000Z",
+          esiTriage: "4",
+          vitalSigns: {
+            temperature: "36.8",
+            pulse: "78",
+            respiration: "16",
+            bloodPressure: "120/80",
+            oxygenSaturation: "99"
+          },
+          chiefComplaint: "ปวดท้องประจำเดือน",
+          physicalExamination: "ไม่พบความผิดปกติ",
+          diagnosis: "อาการปวดประจำเดือน",
+          treatment: "ให้ยาพอนสแตน 500 mg 1 เม็ด ทุก 8 ชั่วโมง",
+          advice: "ประคบอุ่นบริเวณท้องน้อย",
+          followUp: "N",
+          serviceType: "consulted",
+          createdAt: "2023-05-12T10:30:00.000Z",
+          createdBy: "เจ้าหน้าที่พยาบาล"
+        },
+        "R003": {
+          id: "R003",
+          employeeId: "E003",
+          visitDate: "2023-05-15T14:20:00.000Z",
+          esiTriage: "2",
+          vitalSigns: {
+            temperature: "36.5",
+            pulse: "90",
+            respiration: "20",
+            bloodPressure: "130/85",
+            oxygenSaturation: "97"
+          },
+          chiefComplaint: "เวียนศีรษะ ตาลาย หน้ามืด",
+          physicalExamination: "ระดับน้ำตาลในเลือด 60 mg/dL",
+          diagnosis: "ภาวะน้ำตาลในเลือดต่ำ",
+          treatment: "ให้น้ำหวาน และอาหารว่าง ตรวจวัดระดับน้ำตาลซ้ำหลังรับประทาน 95 mg/dL",
+          advice: "รับประทานอาหารให้ตรงเวลา ไม่ควรงดมื้ออาหาร",
+          followUp: "Y",
+          serviceType: "observeRoom",
+          createdAt: "2023-05-15T15:00:00.000Z",
+          createdBy: "เจ้าหน้าที่พยาบาล"
+        },
+        "R004": {
+          id: "R004",
+          employeeId: "E004",
+          visitDate: "2023-05-18T09:45:00.000Z",
+          esiTriage: "5",
+          vitalSigns: {
+            temperature: "36.7",
+            pulse: "75",
+            respiration: "16",
+            bloodPressure: "110/70",
+            oxygenSaturation: "99"
+          },
+          chiefComplaint: "ขอคำปรึกษาเรื่องการดูแลสุขภาพ",
+          physicalExamination: "ร่างกายแข็งแรงดี",
+          diagnosis: "",
+          treatment: "",
+          advice: "แนะนำการออกกำลังกายและการรับประทานอาหารที่เหมาะสม",
+          followUp: "N",
+          serviceType: "consulted",
+          createdAt: "2023-05-18T10:00:00.000Z",
+          createdBy: "เจ้าหน้าที่พยาบาล"
+        },
+        "R005": {
+          id: "R005",
+          employeeId: "E005",
+          visitDate: "2023-05-20T11:30:00.000Z",
+          esiTriage: "3",
+          vitalSigns: {
+            temperature: "36.9",
+            pulse: "88",
+            respiration: "22",
+            bloodPressure: "125/85",
+            oxygenSaturation: "96"
+          },
+          chiefComplaint: "หายใจลำบาก มีเสียงหวีด",
+          physicalExamination: "ได้ยินเสียงวี้ดในปอด",
+          diagnosis: "หอบหืดกำเริบ",
+          treatment: "พ่นยาขยายหลอดลม Salbutamol 2 puff",
+          advice: "หลีกเลี่ยงสิ่งกระตุ้น เช่น ฝุ่น ควัน",
+          followUp: "Y",
+          serviceType: "emergency",
+          createdAt: "2023-05-20T12:00:00.000Z",
+          createdBy: "เจ้าหน้าที่พยาบาล"
+        },
+        "R006": {
+          id: "R006",
+          employeeId: "E001",
+          visitDate: "2023-05-25T13:15:00.000Z",
+          esiTriage: "4",
+          vitalSigns: {
+            temperature: "36.8",
+            pulse: "82",
+            respiration: "17",
+            bloodPressure: "135/85",
+            oxygenSaturation: "98"
+          },
+          chiefComplaint: "ปวดหลัง",
+          physicalExamination: "กดเจ็บบริเวณกล้ามเนื้อหลังส่วนล่าง",
+          diagnosis: "ปวดกล้ามเนื้อหลัง",
+          treatment: "ให้ยา Diclofenac 50 mg 1 เม็ด หลังอาหาร เช้า-เย็น",
+          advice: "ประคบอุ่น หลีกเลี่ยงการยกของหนัก",
+          followUp: "N",
+          serviceType: "selfMedication",
+          createdAt: "2023-05-25T13:30:00.000Z",
+          createdBy: "เจ้าหน้าที่พยาบาล"
+        }
+      },
+      employeeMedicalRecords: {
+        "E001": {
+          "R001": true,
+          "R006": true
+        },
+        "E002": {
+          "R002": true
+        },
+        "E003": {
+          "R003": true
+        },
+        "E004": {
+          "R004": true
+        },
+        "E005": {
+          "R005": true
+        }
+      }
+    };
+
+    // DOM Elements
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const medicalRecordForm = document.getElementById('medicalRecordForm');
+    const searchEmployeeBtn = document.getElementById('searchEmployeeBtn');
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const recordDetail = document.getElementById('recordDetail');
+    const recordDetailContent = document.getElementById('recordDetailContent');
+    const generateReportBtn = document.getElementById('generateReportBtn');
+    const reportResults = document.getElementById('reportResults');
+    const reportChart = document.getElementById('reportChart');
+    const notification = document.getElementById('notification');
+    const notificationTitle = document.getElementById('notificationTitle');
+    const notificationMessage = document.getElementById('notificationMessage');
+    const notificationIcon = document.getElementById('notificationIcon');
+    const closeNotification = document.getElementById('closeNotification');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingMessage = document.getElementById('loadingMessage');
+
+    // Chart instance
+    let myChart = null;
+
+    // Set today's date as default for visit date
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    document.getElementById('visitDate').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    
+    // Set default dates for reports
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const firstDayFormatted = `${firstDayOfMonth.getFullYear()}-${String(firstDayOfMonth.getMonth() + 1).padStart(2, '0')}-${String(firstDayOfMonth.getDate()).padStart(2, '0')}`;
+    const todayFormatted = `${year}-${month}-${day}`;
+    
+    document.getElementById('reportEndDate').value = todayFormatted;
+    document.getElementById('reportStartDate').value = firstDayFormatted;
+
+    // Tab Switching
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.getAttribute('data-tab');
+        
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Show selected tab content
+        tabContents.forEach(content => {
+          if (content.id === tabId) {
+            content.classList.remove('hidden');
+            content.classList.add('fade-in');
+          } else {
+            content.classList.add('hidden');
+            content.classList.remove('fade-in');
+          }
         });
+      });
+    });
 
-        // Auto-hide success message when user starts typing
-        document.getElementById('patientForm').addEventListener('input', function() {
-            document.getElementById('successMessage').classList.remove('show');
+    // Search Employee
+    searchEmployeeBtn.addEventListener('click', () => {
+      const employeeId = document.getElementById('employeeId').value;
+      
+      if (!employeeId) {
+        showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกรหัสพนักงาน');
+        return;
+      }
+      
+      showLoading('กำลังค้นหาข้อมูลพนักงาน...');
+      
+      // Simulate API call with timeout
+      setTimeout(() => {
+        const employeeData = sampleData.employees[employeeId];
+        
+        if (employeeData) {
+          // Fill form with employee data
+          document.getElementById('firstName').value = employeeData.firstName || '';
+          document.getElementById('lastName').value = employeeData.lastName || '';
+          document.getElementById('department').value = employeeData.department || '';
+          document.getElementById('birthdate').value = employeeData.birthdate || '';
+          document.getElementById('phone').value = employeeData.phone || '';
+          document.getElementById('congenitalDisease').value = employeeData.congenitalDisease || '';
+          document.getElementById('allergies').value = employeeData.allergies || '';
+          
+          showNotification('success', 'สำเร็จ', 'พบข้อมูลพนักงาน');
+        } else {
+          showNotification('warning', 'ไม่พบข้อมูล', 'ไม่พบข้อมูลพนักงาน กรุณากรอกข้อมูลใหม่');
+        }
+        
+        hideLoading();
+      }, 800);
+    });
+
+    // Submit Medical Record Form
+    medicalRecordForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      // Get form data
+      const employeeId = document.getElementById('employeeId').value;
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      const department = document.getElementById('department').value;
+      const birthdate = document.getElementById('birthdate').value;
+      const phone = document.getElementById('phone').value;
+      const congenitalDisease = document.getElementById('congenitalDisease').value;
+      const allergies = document.getElementById('allergies').value;
+      const visitDate = document.getElementById('visitDate').value;
+      const esiTriage = document.getElementById('esiTriage').value;
+      const temperature = document.getElementById('temperature').value;
+      const pulse = document.getElementById('pulse').value;
+      const respiration = document.getElementById('respiration').value;
+      const bloodPressure = document.getElementById('bloodPressure').value;
+      const oxygenSaturation = document.getElementById('oxygenSaturation').value;
+      const chiefComplaint = document.getElementById('chiefComplaint').value;
+      const physicalExamination = document.getElementById('physicalExamination').value;
+      const diagnosis = document.getElementById('diagnosis').value;
+      const treatment = document.getElementById('treatment').value;
+      const advice = document.getElementById('advice').value;
+      const followUp = document.querySelector('input[name="followUp"]:checked').value;
+      const serviceType = document.getElementById('serviceType').value;
+      
+      // Validate required fields
+      if (!employeeId || !firstName || !lastName || !department || !visitDate || !esiTriage || !chiefComplaint || !serviceType) {
+        showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
+        return;
+      }
+      
+      showLoading('กำลังบันทึกข้อมูล...');
+      
+      // Simulate API call with timeout
+      setTimeout(() => {
+        // Generate new record ID
+        const recordId = 'R' + String(Object.keys(sampleData.medicalRecords).length + 1).padStart(3, '0');
+        
+        // Save employee data
+        sampleData.employees[employeeId] = {
+          firstName,
+          lastName,
+          department,
+          birthdate,
+          phone,
+          congenitalDisease,
+          allergies,
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Save medical record
+        sampleData.medicalRecords[recordId] = {
+          id: recordId,
+          employeeId,
+          visitDate: new Date(visitDate).toISOString(),
+          esiTriage,
+          vitalSigns: {
+            temperature,
+            pulse,
+            respiration,
+            bloodPressure,
+            oxygenSaturation
+          },
+          chiefComplaint,
+          physicalExamination,
+          diagnosis,
+          treatment,
+          advice,
+          followUp,
+          serviceType,
+          createdAt: new Date().toISOString(),
+          createdBy: "เจ้าหน้าที่พยาบาล"
+        };
+        
+        // Update employee medical records
+        if (!sampleData.employeeMedicalRecords[employeeId]) {
+          sampleData.employeeMedicalRecords[employeeId] = {};
+        }
+        sampleData.employeeMedicalRecords[employeeId][recordId] = true;
+        
+        hideLoading();
+        showNotification('success', 'สำเร็จ', 'บันทึกข้อมูลสำเร็จ');
+        medicalRecordForm.reset();
+        document.getElementById('visitDate').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+      }, 1200);
+    });
+
+    // Search Records
+    searchBtn.addEventListener('click', () => {
+      const searchValue = searchInput.value.trim();
+      
+      if (!searchValue) {
+        showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกข้อมูลที่ต้องการค้นหา');
+        return;
+      }
+      
+      showLoading('กำลังค้นหาข้อมูล...');
+      
+      // Simulate API call with timeout
+      setTimeout(() => {
+        // First try to search by employee ID
+        if (sampleData.employees[searchValue]) {
+          // Found by employee ID
+          const employeeData = sampleData.employees[searchValue];
+          searchRecordsByEmployeeId(searchValue, employeeData);
+        } else {
+          // Try to search by name
+          searchRecordsByName(searchValue);
+        }
+        
+        hideLoading();
+      }, 800);
+    });
+
+    // Search Records by Employee ID
+    function searchRecordsByEmployeeId(employeeId, employeeData) {
+      const employeeMedicalRecords = sampleData.employeeMedicalRecords[employeeId];
+      
+      if (employeeMedicalRecords) {
+        const recordIds = Object.keys(employeeMedicalRecords);
+        const records = recordIds.map(id => sampleData.medicalRecords[id]);
+        
+        // Sort records by visit date (newest first)
+        records.sort((a, b) => new Date(b.visitDate) - new Date(a.visitDate));
+        
+        displayMedicalRecords(records, employeeData);
+      } else {
+        searchResults.innerHTML = `
+          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                  พบข้อมูลพนักงาน ${employeeData.firstName} ${employeeData.lastName} แต่ไม่พบประวัติการรักษา
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+        recordDetail.classList.add('hidden');
+      }
+    }
+
+    // Search Records by Name
+    function searchRecordsByName(name) {
+      const matchedEmployees = [];
+      
+      // Search by first name
+      Object.keys(sampleData.employees).forEach(employeeId => {
+        const employee = sampleData.employees[employeeId];
+        
+        if (employee.firstName.includes(name) || employee.lastName.includes(name)) {
+          matchedEmployees.push({
+            id: employeeId,
+            ...employee
+          });
+        }
+      });
+      
+      if (matchedEmployees.length > 0) {
+        displayEmployeeSearchResults(matchedEmployees);
+      } else {
+        searchResults.innerHTML = `
+          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                  ไม่พบข้อมูลที่ตรงกับคำค้นหา "${name}"
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+        recordDetail.classList.add('hidden');
+      }
+    }
+
+    // Display Employee Search Results
+    function displayEmployeeSearchResults(employees) {
+      let html = `
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสพนักงาน</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แผนก</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การดำเนินการ</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      employees.forEach(employee => {
+        html += `
+          <tr>
+            <td class="py-2 px-4 border-b">${employee.id}</td>
+            <td class="py-2 px-4 border-b">${employee.firstName} ${employee.lastName}</td>
+            <td class="py-2 px-4 border-b">${employee.department || '-'}</td>
+            <td class="py-2 px-4 border-b">
+              <button class="view-records-btn text-white bg-turquoise hover:bg-turquoise-light px-3 py-1 rounded-md text-sm" data-employee-id="${employee.id}" data-employee-name="${employee.firstName} ${employee.lastName}">
+                ดูประวัติ
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      searchResults.innerHTML = html;
+      recordDetail.classList.add('hidden');
+      
+      // Add event listeners to view records buttons
+      document.querySelectorAll('.view-records-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const employeeId = e.target.getAttribute('data-employee-id');
+          const employeeName = e.target.getAttribute('data-employee-name');
+          
+          showLoading('กำลังดึงข้อมูลประวัติการรักษา...');
+          
+          // Simulate API call with timeout
+          setTimeout(() => {
+            const employeeMedicalRecords = sampleData.employeeMedicalRecords[employeeId];
+            
+            if (employeeMedicalRecords) {
+              const recordIds = Object.keys(employeeMedicalRecords);
+              const records = recordIds.map(id => sampleData.medicalRecords[id]);
+              
+              // Sort records by visit date (newest first)
+              records.sort((a, b) => new Date(b.visitDate) - new Date(a.visitDate));
+              
+              displayMedicalRecords(records, { 
+                firstName: employeeName.split(' ')[0], 
+                lastName: employeeName.split(' ')[1] 
+              });
+            } else {
+              showNotification('warning', 'ไม่พบข้อมูล', `ไม่พบประวัติการรักษาของ ${employeeName}`);
+              recordDetail.classList.add('hidden');
+            }
+            
+            hideLoading();
+          }, 800);
         });
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'963b614df7593e68',t:'MTc1MzI3NTgyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+      });
+    }
+
+    // Display Medical Records
+    function displayMedicalRecords(records, employeeData) {
+      if (records.length === 0) {
+        searchResults.innerHTML = `
+          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                  ไม่พบประวัติการรักษาของ ${employeeData.firstName} ${employeeData.lastName}
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+        recordDetail.classList.add('hidden');
+        return;
+      }
+      
+      let html = `
+        <div class="mb-4 bg-turquoise-light rounded-lg p-4">
+          <h3 class="font-medium text-navy">ข้อมูลพนักงาน: ${employeeData.firstName} ${employeeData.lastName}</h3>
+          <p class="text-sm text-gray-600">รหัสพนักงาน: ${records[0].employeeId}</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่รับบริการ</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อาการสำคัญ</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESI</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภทบริการ</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การดำเนินการ</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      records.forEach(record => {
+        const visitDate = new Date(record.visitDate).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
+        let serviceTypeText = '';
+        
+        switch (record.serviceType) {
+          case 'consulted':
+            serviceTypeText = 'ปรึกษาพยาบาล';
+            break;
+          case 'selfMedication':
+            serviceTypeText = 'สั่งจ่ายยาด้วยตนเอง';
+            break;
+          case 'observeRoom':
+            serviceTypeText = 'ใช้ห้องสังเกตอาการ';
+            break;
+          case 'emergency':
+            serviceTypeText = 'อุบัติเหตุ/ฉุกเฉิน';
+            break;
+          case 'refer':
+            serviceTypeText = 'ส่งต่อ/แนะนำ';
+            break;
+          default:
+            serviceTypeText = record.serviceType;
+        }
+        
+        html += `
+          <tr>
+            <td class="py-2 px-4 border-b">${visitDate}</td>
+            <td class="py-2 px-4 border-b">${record.chiefComplaint}</td>
+            <td class="py-2 px-4 border-b">${record.esiTriage}</td>
+            <td class="py-2 px-4 border-b">${serviceTypeText}</td>
+            <td class="py-2 px-4 border-b">
+              <button class="view-record-detail-btn text-white bg-navy hover:bg-blue-800 px-3 py-1 rounded-md text-sm" data-record-id="${record.id}">
+                รายละเอียด
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      searchResults.innerHTML = html;
+      recordDetail.classList.add('hidden');
+      
+      // Add event listeners to view record detail buttons
+      document.querySelectorAll('.view-record-detail-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const recordId = e.target.getAttribute('data-record-id');
+          const record = sampleData.medicalRecords[recordId];
+          
+          if (record) {
+            displayRecordDetail(record);
+          }
+        });
+      });
+    }
+
+    // Display Record Detail
+    function displayRecordDetail(record) {
+      const visitDate = new Date(record.visitDate).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
+      let serviceTypeText = '';
+      
+      switch (record.serviceType) {
+        case 'consulted':
+          serviceTypeText = 'ปรึกษาพยาบาล';
+          break;
+        case 'selfMedication':
+          serviceTypeText = 'สั่งจ่ายยาด้วยตนเอง';
+          break;
+        case 'observeRoom':
+          serviceTypeText = 'ใช้ห้องสังเกตอาการ';
+          break;
+        case 'emergency':
+          serviceTypeText = 'อุบัติเหตุ/ฉุกเฉิน';
+          break;
+        case 'refer':
+          serviceTypeText = 'ส่งต่อ/แนะนำ';
+          break;
+        default:
+          serviceTypeText = record.serviceType;
+      }
+      
+      let followUpText = record.followUp === 'Y' ? 'มี' : 'ไม่มี';
+      
+      let html = `
+        <div class="bg-gray-50 rounded-lg p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 class="font-medium text-navy mb-3">ข้อมูลการรับบริการ</h4>
+              <div class="space-y-2">
+                <div class="flex">
+                  <span class="font-medium w-32">วันที่รับบริการ:</span>
+                  <span>${visitDate}</span>
+                </div>
+                <div class="flex">
+                  <span class="font-medium w-32">ESI Triage:</span>
+                  <span>${record.esiTriage}</span>
+                </div>
+                <div class="flex">
+                  <span class="font-medium w-32">ประเภทบริการ:</span>
+                  <span>${serviceTypeText}</span>
+                </div>
+                <div class="flex">
+                  <span class="font-medium w-32">การนัดติดตาม:</span>
+                  <span>${followUpText}</span>
+                </div>
+              </div>
+              
+              <h4 class="font-medium text-navy mt-6 mb-3">Vital Signs</h4>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="flex">
+                  <span class="font-medium w-32">อุณหภูมิ:</span>
+                  <span>${record.vitalSigns.temperature || '-'} °C</span>
+                </div>
+                <div class="flex">
+                  <span class="font-medium w-32">ชีพจร:</span>
+                  <span>${record.vitalSigns.pulse || '-'} ครั้ง/นาที</span>
+                </div>
+                <div class="flex">
+                  <span class="font-medium w-32">การหายใจ:</span>
+                  <span>${record.vitalSigns.respiration || '-'} ครั้ง/นาที</span>
+                </div>
+                <div class="flex">
+                  <span class="font-medium w-32">ความดันโลหิต:</span>
+                  <span>${record.vitalSigns.bloodPressure || '-'} mmHg</span>
+                </div>
+                <div class="flex">
+                  <span class="font-medium w-32">SpO2:</span>
+                  <span>${record.vitalSigns.oxygenSaturation || '-'} %</span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 class="font-medium text-navy mb-3">ข้อมูลการรักษา</h4>
+              <div class="space-y-4">
+                <div>
+                  <p class="font-medium text-navy">อาการสำคัญ</p>
+                  <p class="mt-1 bg-white p-2 rounded border">${record.chiefComplaint || '-'}</p>
+                </div>
+                <div>
+                  <p class="font-medium text-navy">การตรวจร่างกาย</p>
+                  <p class="mt-1 bg-white p-2 rounded border">${record.physicalExamination || '-'}</p>
+                </div>
+                <div>
+                  <p class="font-medium text-navy">การวินิจฉัย</p>
+                  <p class="mt-1 bg-white p-2 rounded border">${record.diagnosis || '-'}</p>
+                </div>
+                <div>
+                  <p class="font-medium text-navy">การรักษา/ยาที่ให้</p>
+                  <p class="mt-1 bg-white p-2 rounded border">${record.treatment || '-'}</p>
+                </div>
+                <div>
+                  <p class="font-medium text-navy">คำแนะนำ</p>
+                  <p class="mt-1 bg-white p-2 rounded border">${record.advice || '-'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-6 text-right">
+            <p class="text-sm text-gray-500">บันทึกโดย: ${record.createdBy || '-'}</p>
+            <p class="text-sm text-gray-500">เวลาที่บันทึก: ${new Date(record.createdAt).toLocaleString('th-TH')}</p>
+          </div>
+          
+          <div class="mt-6 flex justify-center">
+            <button id="printRecordBtn" class="btn-secondary px-6 py-2 rounded-md flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              พิมพ์ประวัติ
+            </button>
+          </div>
+        </div>
+      `;
+      
+      recordDetailContent.innerHTML = html;
+      recordDetail.classList.remove('hidden');
+      
+      // Add event listener to print button
+      document.getElementById('printRecordBtn').addEventListener('click', () => {
+        showNotification('info', 'การพิมพ์', 'กำลังเตรียมข้อมูลสำหรับการพิมพ์...');
+      });
+    }
+
+    // Generate Report
+    generateReportBtn.addEventListener('click', () => {
+      const reportType = document.getElementById('reportType').value;
+      const startDate = document.getElementById('reportStartDate').value;
+      const endDate = document.getElementById('reportEndDate').value;
+      
+      if (!startDate || !endDate) {
+        showNotification('error', 'ข้อผิดพลาด', 'กรุณาเลือกช่วงเวลาที่ต้องการ');
+        return;
+      }
+      
+      showLoading('กำลังสร้างรายงาน...');
+      
+      // Simulate API call with timeout
+      setTimeout(() => {
+        // Convert dates to timestamp for comparison
+        const startTimestamp = new Date(startDate).getTime();
+        const endTimestamp = new Date(endDate + 'T23:59:59').getTime();
+        
+        // Filter records by date range
+        const filteredRecords = Object.values(sampleData.medicalRecords).filter(record => {
+          const recordDate = new Date(record.visitDate).getTime();
+          return recordDate >= startTimestamp && recordDate <= endTimestamp;
+        });
+        
+        // Generate report based on type
+        switch (reportType) {
+          case 'daily':
+            generateDailyReport(filteredRecords, startDate, endDate);
+            break;
+          case 'monthly':
+            generateMonthlyReport(filteredRecords, startDate, endDate);
+            break;
+          case 'serviceType':
+            generateServiceTypeReport(filteredRecords, startDate, endDate);
+            break;
+          case 'department':
+            generateDepartmentReport(filteredRecords, startDate, endDate);
+            break;
+        }
+        
+        hideLoading();
+      }, 1000);
+    });
+
+    // Generate Daily Report
+    function generateDailyReport(records, startDate, endDate) {
+      // Group records by date
+      const recordsByDate = {};
+      
+      records.forEach(record => {
+        const date = new Date(record.visitDate).toLocaleDateString('th-TH', { dateStyle: 'medium' });
+        
+        if (!recordsByDate[date]) {
+          recordsByDate[date] = [];
+        }
+        
+        recordsByDate[date].push(record);
+      });
+      
+      // Sort dates
+      const sortedDates = Object.keys(recordsByDate).sort((a, b) => {
+        return new Date(a) - new Date(b);
+      });
+      
+      let html = `
+        <h3 class="text-lg font-medium text-navy mb-4">รายงานประจำวัน</h3>
+        <p class="mb-4">ช่วงวันที่: ${new Date(startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })} - ${new Date(endDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</p>
+        
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนผู้รับบริการ</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESI 1</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESI 2</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESI 3</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESI 4</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESI 5</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      let totalRecords = 0;
+      let totalESI1 = 0;
+      let totalESI2 = 0;
+      let totalESI3 = 0;
+      let totalESI4 = 0;
+      let totalESI5 = 0;
+      
+      const chartLabels = [];
+      const chartData = [];
+      
+      sortedDates.forEach(date => {
+        const dateRecords = recordsByDate[date];
+        const count = dateRecords.length;
+        totalRecords += count;
+        
+        // Count ESI levels
+        const esi1 = dateRecords.filter(r => r.esiTriage === '1').length;
+        const esi2 = dateRecords.filter(r => r.esiTriage === '2').length;
+        const esi3 = dateRecords.filter(r => r.esiTriage === '3').length;
+        const esi4 = dateRecords.filter(r => r.esiTriage === '4').length;
+        const esi5 = dateRecords.filter(r => r.esiTriage === '5').length;
+        
+        totalESI1 += esi1;
+        totalESI2 += esi2;
+        totalESI3 += esi3;
+        totalESI4 += esi4;
+        totalESI5 += esi5;
+        
+        chartLabels.push(date);
+        chartData.push(count);
+        
+        html += `
+          <tr>
+            <td class="py-2 px-4 border-b">${date}</td>
+            <td class="py-2 px-4 border-b">${count}</td>
+            <td class="py-2 px-4 border-b">${esi1}</td>
+            <td class="py-2 px-4 border-b">${esi2}</td>
+            <td class="py-2 px-4 border-b">${esi3}</td>
+            <td class="py-2 px-4 border-b">${esi4}</td>
+            <td class="py-2 px-4 border-b">${esi5}</td>
+          </tr>
+        `;
+      });
+      
+      html += `
+          <tr class="bg-gray-100 font-medium">
+            <td class="py-2 px-4 border-b">รวม</td>
+            <td class="py-2 px-4 border-b">${totalRecords}</td>
+            <td class="py-2 px-4 border-b">${totalESI1}</td>
+            <td class="py-2 px-4 border-b">${totalESI2}</td>
+            <td class="py-2 px-4 border-b">${totalESI3}</td>
+            <td class="py-2 px-4 border-b">${totalESI4}</td>
+            <td class="py-2 px-4 border-b">${totalESI5}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+      `;
+      
+      reportResults.innerHTML = html;
+      
+      // Create chart
+      createChart('bar', 'จำนวนผู้รับบริการรายวัน', chartLabels, chartData);
+    }
+
+    // Generate Monthly Report
+    function generateMonthlyReport(records, startDate, endDate) {
+      // Group records by month
+      const recordsByMonth = {};
+      
+      records.forEach(record => {
+        const date = new Date(record.visitDate);
+        const month = date.toLocaleDateString('th-TH', { year: 'numeric', month: 'long' });
+        
+        if (!recordsByMonth[month]) {
+          recordsByMonth[month] = [];
+        }
+        
+        recordsByMonth[month].push(record);
+      });
+      
+      // Sort months
+      const sortedMonths = Object.keys(recordsByMonth).sort((a, b) => {
+        return new Date(a) - new Date(b);
+      });
+      
+      let html = `
+        <h3 class="text-lg font-medium text-navy mb-4">รายงานประจำเดือน</h3>
+        <p class="mb-4">ช่วงวันที่: ${new Date(startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })} - ${new Date(endDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</p>
+        
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เดือน</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนผู้รับบริการ</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ปรึกษาพยาบาล</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สั่งจ่ายยาด้วยตนเอง</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ใช้ห้องสังเกตอาการ</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อุบัติเหตุ/ฉุกเฉิน</th>
+                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ส่งต่อ/แนะนำ</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      let totalRecords = 0;
+      let totalConsulted = 0;
+      let totalSelfMedication = 0;
+      let totalObserveRoom = 0;
+      let totalEmergency = 0;
+      let totalRefer = 0;
+      
+      const chartLabels = [];
+      const chartData = [];
+      
+      sortedMonths.forEach(month => {
+        const monthRecords = recordsByMonth[month];
+        const count = monthRecords.length;
+        totalRecords += count;
+        
+        // Count service types
+        const consulted = monthRecords.filter(r => r.serviceType === 'consulted').length;
+        const selfMedication = monthRecords.filter(r => r.serviceType === 'selfMedication').length;
+        const observeRoom = monthRecords.filter(r => r.serviceType === 'observeRoom').length;
+        const emergency = monthRecords.filter(r => r.serviceType === 'emergency').length;
+        const refer = monthRecords.filter(r => r.serviceType === 'refer').length;
+        
+        totalConsulted += consulted;
+        totalSelfMedication += selfMedication;
+        totalObserveRoom += observeRoom;
+        totalEmergency += emergency;
+        totalRefer += refer;
+        
+        chartLabels.push(month);
+        chartData.push(count);
+        
+        html += `
+          <tr>
+            <td class="py-2 px-4 border-b">${month}</td>
+            <td class="py-2 px-4 border-b">${count}</td>
+            <td class="py-2 px-4 border-b">${consulted}</td>
+            <td class="py-2 px-4 border-b">${selfMedication}</td>
+            <td class="py-2 px-4 border-b">${observeRoom}</td>
+            <td class="py-2 px-4 border-b">${emergency}</td>
+            <td class="py-2 px-4 border-b">${refer}</td>
+          </tr>
+        `;
+      });
+      
+      html += `
+          <tr class="bg-gray-100 font-medium">
+            <td class="py-2 px-4 border-b">รวม</td>
+            <td class="py-2 px-4 border-b">${totalRecords}</td>
+            <td class="py-2 px-4 border-b">${totalConsulted}</td>
+            <td class="py-2 px-4 border-b">${totalSelfMedication}</td>
+            <td class="py-2 px-4 border-b">${totalObserveRoom}</td>
+            <td class="py-2 px-4 border-b">${totalEmergency}</td>
+            <td class="py-2 px-4 border-b">${totalRefer}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+      `;
+      
+      reportResults.innerHTML = html;
+      
+      // Create chart
+      createChart('bar', 'จำนวนผู้รับบริการรายเดือน', chartLabels, chartData);
+    }
+
+    // Generate Service Type Report
+    function generateServiceTypeReport(records, startDate, endDate) {
+      // Group records by service type
+      const serviceTypes = {
+        consulted: { name: 'ปรึกษาพยาบาล', count: 0 },
+        selfMedication: { name: 'สั่งจ่ายยาด้วยตนเอง', count: 0 },
+        observeRoom: { name: 'ใช้ห้องสังเกตอาการ', count: 0 },
+        emergency: { name: 'อุบัติเหตุ/ฉุกเฉิน', count: 0 },
+        refer: { name: 'ส่งต่อ/แนะนำ', count: 0 }
+      };
+      
+      records.forEach(record => {
+        if (serviceTypes[record.serviceType]) {
+          serviceTypes[record.serviceType].count++;
+        }
+      });
+      
+      let html = `
+        <h3 class="text-lg font-medium text-navy mb-4">รายงานตามประเภทการให้บริการ</h3>
+        <p class="mb-4">ช่วงวันที่: ${new Date(startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })} - ${new Date(endDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full bg-white">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภทการให้บริการ</th>
+                    <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
+                    <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ร้อยละ</th>
+                  </tr>
+                </thead>
+                <tbody>
+      `;
+      
+      const totalCount = records.length;
+      let totalPercentage = 0;
+      
+      const chartLabels = [];
+      const chartData = [];
+      const chartColors = [
+        'rgba(54, 162, 235, 0.8)',
+        'rgba(75, 192, 192, 0.8)',
+        'rgba(255, 206, 86, 0.8)',
+        'rgba(255, 99, 132, 0.8)',
+        'rgba(153, 102, 255, 0.8)'
+      ];
+      
+      Object.keys(serviceTypes).forEach((type, index) => {
+        const { name, count } = serviceTypes[type];
+        const percentage = totalCount > 0 ? (count / totalCount * 100).toFixed(2) : 0;
+        totalPercentage += parseFloat(percentage);
+        
+        chartLabels.push(name);
+        chartData.push(count);
+        
+        html += `
+          <tr>
+            <td class="py-2 px-4 border-b">${name}</td>
+            <td class="py-2 px-4 border-b">${count}</td>
+            <td class="py-2 px-4 border-b">${percentage}%</td>
+          </tr>
+        `;
+      });
+      
+      html += `
+          <tr class="bg-gray-100 font-medium">
+            <td class="py-2 px-4 border-b">รวม</td>
+            <td class="py-2 px-4 border-b">${totalCount}</td>
+            <td class="py-2 px-4 border-b">${totalPercentage.toFixed(2)}%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+          </div>
+        </div>
+      `;
+      
+      reportResults.innerHTML = html;
+      
+      // Create chart
+      createChart('pie', 'สัดส่วนประเภทการให้บริการ', chartLabels, chartData, chartColors);
+    }
+
+    // Generate Department Report
+    function generateDepartmentReport(records, startDate, endDate) {
+      // Group records by department
+      const recordsByDepartment = {};
+      
+      records.forEach(record => {
+        const employeeId = record.employeeId;
+        const employee = sampleData.employees[employeeId];
+        
+        if (employee && employee.department) {
+          const department = employee.department;
+          
+          if (!recordsByDepartment[department]) {
+            recordsByDepartment[department] = [];
+          }
+          
+          recordsByDepartment[department].push(record);
+        }
+      });
+      
+      // Sort departments by count
+      const sortedDepartments = Object.keys(recordsByDepartment).sort((a, b) => {
+        return recordsByDepartment[b].length - recordsByDepartment[a].length;
+      });
+      
+      let html = `
+        <h3 class="text-lg font-medium text-navy mb-4">รายงานตามแผนก</h3>
+        <p class="mb-4">ช่วงวันที่: ${new Date(startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })} - ${new Date(endDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full bg-white">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แผนก</th>
+                    <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
+                    <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ร้อยละ</th>
+                  </tr>
+                </thead>
+                <tbody>
+      `;
+      
+      const totalCount = records.length;
+      let totalPercentage = 0;
+      
+      const chartLabels = [];
+      const chartData = [];
+      const chartColors = [
+        'rgba(54, 162, 235, 0.8)',
+        'rgba(75, 192, 192, 0.8)',
+        'rgba(255, 206, 86, 0.8)',
+        'rgba(255, 99, 132, 0.8)',
+        'rgba(153, 102, 255, 0.8)',
+        'rgba(255, 159, 64, 0.8)',
+        'rgba(201, 203, 207, 0.8)'
+      ];
+      
+      sortedDepartments.forEach((department, index) => {
+        const departmentRecords = recordsByDepartment[department];
+        const count = departmentRecords.length;
+        const percentage = totalCount > 0 ? (count / totalCount * 100).toFixed(2) : 0;
+        totalPercentage += parseFloat(percentage);
+        
+        chartLabels.push(department);
+        chartData.push(count);
+        
+        html += `
+          <tr>
+            <td class="py-2 px-4 border-b">${department}</td>
+            <td class="py-2 px-4 border-b">${count}</td>
+            <td class="py-2 px-4 border-b">${percentage}%</td>
+          </tr>
+        `;
+      });
+      
+      html += `
+          <tr class="bg-gray-100 font-medium">
+            <td class="py-2 px-4 border-b">รวม</td>
+            <td class="py-2 px-4 border-b">${totalCount}</td>
+            <td class="py-2 px-4 border-b">${totalPercentage.toFixed(2)}%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+          </div>
+        </div>
+      `;
+      
+      reportResults.innerHTML = html;
+      
+      // Create chart
+      createChart('doughnut', 'สัดส่วนการรับบริการตามแผนก', chartLabels, chartData, chartColors);
+    }
+
+    // Create Chart
+    function createChart(type, title, labels, data, colors = null) {
+      // Destroy previous chart if exists
+      if (myChart) {
+        myChart.destroy();
+      }
+      
+      // Show chart canvas
+      reportChart.classList.remove('hidden');
+      
+      // Create chart
+      const ctx = reportChart.getContext('2d');
+      
+      const chartColors = colors || [
+        'rgba(54, 162, 235, 0.8)',
+        'rgba(75, 192, 192, 0.8)',
+        'rgba(255, 206, 86, 0.8)',
+        'rgba(255, 99, 132, 0.8)',
+        'rgba(153, 102, 255, 0.8)',
+        'rgba(255, 159, 64, 0.8)',
+        'rgba(201, 203, 207, 0.8)'
+      ];
+      
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: title,
+            font: {
+              size: 16
+            }
+          }
+        }
+      };
+      
+      if (type === 'bar') {
+        chartOptions.scales = {
+          y: {
+            beginAtZero: true
+          }
+        };
+      }
+      
+      const chartConfig = {
+        type: type,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'จำนวน',
+            data: data,
+            backgroundColor: type === 'bar' ? 'rgba(64, 224, 208, 0.8)' : chartColors,
+            borderColor: type === 'bar' ? 'rgba(64, 224, 208, 1)' : chartColors.map(color => color.replace('0.8', '1')),
+            borderWidth: 1
+          }]
+        },
+        options: chartOptions
+      };
+      
+      myChart = new Chart(ctx, chartConfig);
+    }
+
+    // Show Notification
+    function showNotification(type, title, message) {
+      notificationTitle.textContent = title;
+      notificationMessage.textContent = message;
+      
+      // Set icon and color based on type
+      switch (type) {
+        case 'success':
+          notificationIcon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-green-100 text-green-500';
+          notificationIcon.innerHTML = `
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+          `;
+          break;
+        case 'error':
+          notificationIcon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-red-100 text-red-500';
+          notificationIcon.innerHTML = `
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          `;
+          break;
+        case 'warning':
+          notificationIcon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-yellow-100 text-yellow-500';
+          notificationIcon.innerHTML = `
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          `;
+          break;
+        default:
+          notificationIcon.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-blue-100 text-blue-500';
+          notificationIcon.innerHTML = `
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          `;
+      }
+      
+      // Show notification
+      notification.classList.remove('scale-0');
+      notification.classList.add('scale-100');
+      
+      // Auto hide after 5 seconds
+      setTimeout(() => {
+        hideNotification();
+      }, 5000);
+    }
+
+    // Hide Notification
+    function hideNotification() {
+      notification.classList.remove('scale-100');
+      notification.classList.add('scale-0');
+    }
+
+    // Close Notification Button
+    closeNotification.addEventListener('click', hideNotification);
+
+    // Show Loading Overlay
+    function showLoading(message = 'กำลังประมวลผล...') {
+      loadingMessage.textContent = message;
+      loadingOverlay.classList.remove('hidden');
+    }
+
+    // Hide Loading Overlay
+    function hideLoading() {
+      loadingOverlay.classList.add('hidden');
+    }
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'963bef58609c14aa',t:'MTc1MzI4MTY0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
