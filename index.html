@@ -285,6 +285,7 @@
 			const newClientRef = database.ref('client').push(); // สร้าง key ใหม่
 			newClientRef.set(formData)
 			  .then(() => {
+				  alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
 				 submitBtn.disabled = false;
                 submitText.style.display = 'inline';
                 loadingSpinner.classList.remove('show');
