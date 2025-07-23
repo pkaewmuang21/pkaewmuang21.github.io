@@ -285,7 +285,19 @@
 			const newClientRef = database.ref('client').push(); // สร้าง key ใหม่
 			newClientRef.set(formData)
 			  .then(() => {
-				  alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
+					successMessage.classList.add('show');
+                    
+                    // Reset form
+                    document.getElementById('patientForm').reset();
+                    
+                    // Scroll to top to show success message
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    // Hide success message after 5 seconds
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                    }, 5000);
+				  //alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
 				 submitBtn.disabled = false;
                 submitText.style.display = 'inline';
                 loadingSpinner.classList.remove('show');
