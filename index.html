@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกประวัติผู้รับบริการ - การบินกรุงเทพฯ</title>
+	<!-- Firebase App (core) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<!-- Firebase Database -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ba-blue': '#1e40af',
+                        'ba-light-blue': '#3b82f6',
+                        'ba-turquoise': '#06b6d4',
+                        'ba-light-turquoise': '#67e8f9'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e40af 0%, #06b6d4 100%);
+        }
+        .form-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .input-focus:focus {
+            border-color: #06b6d4;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+        .loading {
+            display: none;
+        }
+        .loading.show {
+            display: inline-block;
+        }
+        .success-message {
+            display: none;
+        }
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-cyan-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-6 shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-center space-x-4">
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                    </svg>
+                </div>
+                <div class="text-center">
+                    <h1 class="text-2xl font-bold">ระบบบันทึกประวัติผู้รับบริการ</h1>
+                    <p class="text-blue-100 text-sm">ห้องพยาบาล การบินกรุงเทพฯ สำนักงานใหญ่</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Success Message -->
+            <div id="successMessage" class="success-message bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <span class="font-medium">บันทึกข้อมูลเรียบร้อยแล้ว!</span>
+                </div>
+            </div>
+
+            <!-- Form Card -->
+            <div class="bg-white rounded-2xl form-shadow overflow-hidden">
+                <div class="bg-gradient-to-r from-ba-blue to-ba-turquoise p-6">
+                    <h2 class="text-xl font-semibold text-white text-center">แบบฟอร์มบันทึกข้อมูลผู้รับบริการ</h2>
+                </div>
+
+                <form id="patientForm" class="p-8 space-y-6">
+                    <!-- Row 1: Employee ID and Department -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">รหัสพนักงาน *</label>
+                            <input type="text" id="employeeId" name="employeeId" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
+                                placeholder="กรอกรหัสพนักงาน">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">แผนก *</label>
+                            <input type="text" id="department" name="department" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
+                                placeholder="กรอกแผนก">
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Name and Surname -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ *</label>
+                            <input type="text" id="firstName" name="firstName" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
+                                placeholder="กรอกชื่อ">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">สกุล *</label>
+                            <input type="text" id="lastName" name="lastName" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
+                                placeholder="กรอกนามสกุล">
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Birth Date and Phone -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">วันเดือนปีเกิด *</label>
+                            <input type="date" id="birthDate" name="birthDate" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">เบอร์โทรศัพท์ *</label>
+                            <input type="tel" id="phone" name="phone" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
+                                placeholder="กรอกเบอร์โทรศัพท์">
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Medical Conditions -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">โรคประจำตัว</label>
+                        <textarea id="medicalConditions" name="medicalConditions" rows="3"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
+                            placeholder="กรอกโรคประจำตัว (หากไม่มีให้ใส่ 'ไม่มี')"></textarea>
+                    </div>
+
+                    <!-- Row 5: Allergies -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">แพ้ยา/แพ้อาหาร</label>
+                        <textarea id="allergies" name="allergies" rows="3"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all duration-200"
+                            placeholder="กรอกข้อมูลการแพ้ยาหรือแพ้อาหาร (หากไม่มีให้ใส่ 'ไม่มี')"></textarea>
+                    </div>
+
+                    <!-- Row 6: Customer Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ประเภทลูกค้า *</label>
+                        <div class="flex space-x-6">
+                            <label class="flex items-center">
+                                <input type="radio" id="customerTypePG" name="customerType" value="PG" required
+                                    class="w-4 h-4 text-ba-turquoise border-gray-300 focus:ring-ba-turquoise">
+                                <span class="ml-2 text-sm text-gray-700">PG</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" id="customerTypeNonPG" name="customerType" value="Non PG" required
+                                    class="w-4 h-4 text-ba-turquoise border-gray-300 focus:ring-ba-turquoise">
+                                <span class="ml-2 text-sm text-gray-700">Non PG</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-6">
+                        <button type="submit" id="submitBtn"
+                            class="w-full bg-gradient-to-r from-ba-blue to-ba-turquoise text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 transform hover:scale-[1.02] shadow-lg">
+                            <span id="submitText">บันทึกข้อมูล</span>
+                            <span id="loadingSpinner" class="loading">
+                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                กำลังบันทึก...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-8 text-gray-600">
+                <p class="text-sm">© 2024 การบินกรุงเทพฯ สำนักงานใหญ่ - ห้องพยาบาล</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+	 // 1. Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyC5WWSxG9iLQMZqO057qZ-Q4EA19d3Q1eE",
+    authDomain: "pg-firstaid.firebaseapp.com",
+    databaseURL: "https://pg-firstaid-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "pg-firstaid",
+    storageBucket: "pg-firstaid.firebasestorage.app",
+    messagingSenderId: "85440797529",
+    appId: "1:85440797529:web:9e146646682f1190024a48"
+  };
+
+  // 2. เริ่มต้น firebase
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+  
+        document.getElementById('patientForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const successMessage = document.getElementById('successMessage');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.style.display = 'none';
+            loadingSpinner.classList.add('show');
+            successMessage.classList.remove('show');
+            
+            // Collect form data
+            /*const formData = new FormData();
+            formData.append('employeeId', document.getElementById('employeeId').value);
+            formData.append('department', document.getElementById('department').value);
+            formData.append('firstName', document.getElementById('firstName').value);
+            formData.append('lastName', document.getElementById('lastName').value);
+            formData.append('birthDate', document.getElementById('birthDate').value);
+            formData.append('medicalConditions', document.getElementById('medicalConditions').value || 'ไม่มี');
+            formData.append('allergies', document.getElementById('allergies').value || 'ไม่มี');
+            formData.append('phone', document.getElementById('phone').value);
+            formData.append('customerType', document.querySelector('input[name="customerType"]:checked').value);
+            
+            try {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbwTMbPj2byT8uISzkuEz-quJNZ-Iu77K2ZnDYew6JKTU6l1v8_H3h3OAqL7FLWw1b_sPg/exec', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    // Show success message
+                    successMessage.classList.add('show');
+                    
+                    // Reset form
+                    document.getElementById('patientForm').reset();
+                    
+                    // Scroll to top to show success message
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    // Hide success message after 5 seconds
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                    }, 5000);
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
+                console.error('Error:', error);
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitText.style.display = 'inline';
+                loadingSpinner.classList.remove('show');
+            }*/
+			
+			const formData = {
+			  employeeId: document.getElementById('employeeId').value,
+			  department: document.getElementById('department').value,
+			  firstName: document.getElementById('firstName').value,
+			  lastName: document.getElementById('lastName').value,
+			  birthDate: document.getElementById('birthDate').value,
+			  medicalConditions: document.getElementById('medicalConditions').value || 'ไม่มี',
+			  allergies: document.getElementById('allergies').value || 'ไม่มี',
+			  phone: document.getElementById('phone').value,
+			  customerType: document.querySelector('input[name="customerType"]:checked').value
+			};
+
+			// 4. บันทึกเข้า table `client`
+			const newClientRef = database.ref('client').push(); // สร้าง key ใหม่
+			newClientRef.set(formData)
+			  .then(() => {
+				 submitBtn.disabled = false;
+                submitText.style.display = 'inline';
+                loadingSpinner.classList.remove('show');
+			  })
+			  .catch((error) => {
+				alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
+                console.error('Error:', error);
+			  });
+        });
+
+        // Auto-hide success message when user starts typing
+        document.getElementById('patientForm').addEventListener('input', function() {
+            document.getElementById('successMessage').classList.remove('show');
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'963b614df7593e68',t:'MTc1MzI3NTgyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
