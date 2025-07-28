@@ -558,14 +558,23 @@
                 <!-- Reports -->
                 <div id="reports" class="tab-content hidden bg-white rounded-lg shadow-lg p-6">
                     <h2 class="text-xl font-bold text-navy mb-4">รายงาน</h2>
-                    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div id="searchReport-sec" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-gray-700 text-sm font-medium mb-1" for="reportType">ประเภทรายงาน</label>
                             <select id="reportType" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
-                                <option value="daily">รายงานประจำวัน</option>
+                                <!--<option value="daily">รายงานประจำวัน</option>
                                 <option value="monthly">รายงานประจำเดือน</option>
+                                    -->
                                 <option value="serviceType">รายงานตามประเภทการให้บริการ</option>
                                 <option value="department">รายงานตามแผนก</option>
+                                <option value="diagnosis">รายงานตามการวินิฉัย</option>
+                                <option value="medicine">รายงานตามการใช้ยา</option>
+                            </select>
+                        </div>
+                        <div id="locationReport-sec" class="hidden">
+                            <label class="block text-gray-700 text-sm font-medium mb-1" for="locationReport">Location</label>
+                            <select id="locationReport" name="locationReport" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                                <option disabled selected>-- ทั้งหมด --</option>
                             </select>
                         </div>
                         <div>
@@ -932,6 +941,39 @@
                     document.getElementById("fname").innerText = name;
                     document.getElementById("location").innerText = location;
                     isAdmin = firstDoc.data().isAdmin;
+                    if (isAdmin) {
+                        let snapshot = await db.collection("location").get();
+
+                        const select = document.getElementById("locationReport");
+
+                        // ลบ option เดิมทั้งหมดก่อน (optional)
+                        select.innerHTML = "";
+
+                        // สร้าง option แรกที่เป็น "-- เลือก --"
+                        const defaultOption = document.createElement("option");
+                        defaultOption.textContent = "-- ทั้งหมด --";
+                        defaultOption.value = '';        // หรือ "none"
+                        defaultOption.disabled = false;
+                        defaultOption.selected = true;
+
+                        select.appendChild(defaultOption);
+
+                        snapshot.forEach((doc) => {
+                            const data = doc.data();
+                            const option = document.createElement("option");
+                            //option.value = doc.id;
+                            option.value = data.name;
+                            option.textContent = data.name || "(no name)";
+                            select.appendChild(option);
+                        });
+                        document.getElementById('locationReport-sec').classList.remove('hidden');
+                        document.getElementById('searchReport-sec').classList.remove('md:grid-cols-3');
+                        document.getElementById('searchReport-sec').classList.add('md:grid-cols-4');
+                    } else {
+                        document.getElementById('locationReport-sec').classList.add('hidden');
+                        document.getElementById('searchReport-sec').classList.remove('md:grid-cols-4');
+                        document.getElementById('searchReport-sec').classList.add('md:grid-cols-3');
+                    }
                     showNotification('success', 'เข้าสู่ระบบสำเร็จ', 'ยินดีต้อนรับ คุณ ' + name);
                 } else {
                     showNotification('error', 'Warning', 'Not permission.');
@@ -2213,7 +2255,7 @@
                                             <span>${visitDate}</span>
                                         </div>
                                         <div class="flex">
-                                            <span class="font-medium w-32">location:</span>
+                                            <span class="font-medium w-32">Location:</span>
                                             <span>${record.data().location}</span>
                                         </div>
                                         <div class="flex">
@@ -2487,6 +2529,9 @@
             const reportType = document.getElementById('reportType').value;
             const startDate = document.getElementById('reportStartDate').value;
             const endDate = document.getElementById('reportEndDate').value;
+            const location = document.getElementById('locationReport').value;
+            //let ret = countAllServiceTypeByDate(startDate, endDate + 'T23:59:59', location);
+            //console.log(ret)
             if (!startDate || !endDate) {
                 showNotification('error', 'ข้อผิดพลาด', 'กรุณาเลือกช่วงเวลาที่ต้องการ');
                 return;
@@ -2511,15 +2556,182 @@
                         generateMonthlyReport(filteredRecords, startDate, endDate);
                         break;
                     case 'serviceType':
-                        generateServiceTypeReport(filteredRecords, startDate, endDate);
+                        //generateServiceTypeReport(filteredRecords, startDate, endDate);
+                        generateServiceTypeReport(startDate, endDate + 'T23:59:59', location);
                         break;
                     case 'department':
-                        generateDepartmentReport(filteredRecords, startDate, endDate);
+                        //generateDepartmentReport(filteredRecords, startDate, endDate);
+                        generateDiagnosisReport(startDate, endDate + 'T23:59:59', location, 'department');
+                        break;
+                    case 'diagnosis':
+                        generateDiagnosisReport(startDate, endDate + 'T23:59:59', location, 'diagnosis');
+                        break;
+                    case 'medicine':
+                        generateDiagnosisReport(startDate, endDate + 'T23:59:59', location, 'medicine');
                         break;
                 }
                 hideLoading();
             }, 1000);
         });
+
+        async function countAllServiceTypeByDate(startDate, endDate, location) {
+            const userData = userDb.data();
+       
+            let opdCardsQuery = db.collectionGroup("opdCard")
+                .where("visitDate", ">=", startDate)
+                .where("visitDate", "<=", endDate);
+
+            if (!userData.isAdmin) {
+                opdCardsQuery = opdCardsQuery.where("location", "==", userData.location);
+            } else if (location !== '') {
+                opdCardsQuery = opdCardsQuery.where("location", "==", location);
+            }
+
+            const serviceTypeCount = {};
+
+            try {
+                const snapshot = await opdCardsQuery.get();
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const type = data.serviceType || "ไม่ระบุ";
+
+                    serviceTypeCount[type] = (serviceTypeCount[type] || 0) + 1;
+                });
+
+                //console.log(serviceTypeCount);
+                const resultArray = Object.entries(serviceTypeCount).map(([name, qty]) => ({
+                    name,
+                    qty
+                }));
+                console.log(resultArray);
+                return resultArray;
+
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการ query:", error);
+                return {};
+            }
+        }
+
+        async function countAllDiagnosisByDate(startDate, endDate, location) {
+            const userData = userDb.data();
+
+            let opdCardsQuery = db.collectionGroup("opdCard")
+                .where("visitDate", ">=", startDate)
+                .where("visitDate", "<=", endDate);
+
+            if (!userData.isAdmin) {
+                opdCardsQuery = opdCardsQuery.where("location", "==", userData.location);
+            } else if (location !== '') {
+                opdCardsQuery = opdCardsQuery.where("location", "==", location);
+            }
+
+            const serviceTypeCount = {};
+
+            try {
+                const snapshot = await opdCardsQuery.get();
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const type = data.diagnosis || "ไม่ระบุ";
+
+                    serviceTypeCount[type] = (serviceTypeCount[type] || 0) + 1;
+                });
+
+                //console.log(serviceTypeCount);
+                const resultArray = Object.entries(serviceTypeCount).map(([name, qty]) => ({
+                    name,
+                    qty
+                }));
+                console.log(resultArray);
+                return resultArray;
+
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการ query:", error);
+                return {};
+            }
+        }
+        async function countAllMedicineNameByDate(startDate, endDate, location) {
+            const userData = userDb.data();
+
+            let opdCardsQuery = db.collectionGroup("opdCard")
+                .where("visitDate", ">=", startDate)
+                .where("visitDate", "<=", endDate);
+
+            if (!userData.isAdmin) {
+                opdCardsQuery = opdCardsQuery.where("location", "==", userData.location);
+            } else if (location !== '') {
+                opdCardsQuery = opdCardsQuery.where("location", "==", location);
+            }
+
+            const serviceTypeCount = {};
+
+            try {
+                const snapshot = await opdCardsQuery.get();
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    console.log(data)
+                    const meds = data.medicines || [];
+
+                    meds.forEach((med) => {
+                        const name = med.name || "ไม่ระบุ";
+                        serviceTypeCount[name] = (serviceTypeCount[name] || 0) + 1;
+                    });
+                });
+
+                console.log(serviceTypeCount);
+                const resultArray = Object.entries(serviceTypeCount).map(([name, qty]) => ({
+                    name,
+                    qty
+                }));
+                console.log(resultArray);
+                return resultArray;
+
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการ query:", error);
+                return {};
+            }         
+        }
+        async function countAllOpdCardByDepartment(startDate, endDate, location) {
+            const userData = userDb.data();
+
+            const employeeSnapshot = await db.collection("employees").get();
+            const departmentCount = {};
+
+            for (const empDoc of employeeSnapshot.docs) {
+                const employee = empDoc.data();
+                const department = employee.department || "ไม่ระบุ";
+
+                let opdCardQuery = db
+                    .collection("employees")
+                    .doc(empDoc.id)
+                    .collection("opdCard")
+                    .where("visitDate", ">=", startDate)
+                    .where("visitDate", "<=", endDate);
+
+                if (!userData.isAdmin) {
+                    opdCardsQuery = opdCardsQuery.where("location", "==", userData.location);
+                } else if (location !== '') {
+                    opdCardsQuery = opdCardsQuery.where("location", "==", location);
+                }
+
+                const opdCardSnapshot = await opdCardQuery.get();
+
+                const count = opdCardSnapshot.size;
+
+                departmentCount[department] = (departmentCount[department] || 0) + count;
+            }
+
+            console.log(departmentCount);
+            let resultArray = Object.entries(departmentCount).map(([name, qty]) => ({
+                name,
+                qty
+            }));
+            resultArray = resultArray.filter(item => item.qty !== 0);
+            console.log(resultArray);
+            return resultArray;
+        }
         // Generate Daily Report
         function generateDailyReport(records, startDate, endDate) {
             // Group records by date
@@ -2708,10 +2920,97 @@
             // Create chart
             createChart('bar', 'จำนวนผู้รับบริการรายเดือน', chartLabels, chartData);
         }
-        // Generate Service Type Report
-        function generateServiceTypeReport(records, startDate, endDate) {
+        async function generateDiagnosisReport(startDate, endDate, location, mode) {
             // Group records by service type
-            const serviceTypes = {
+            let records = [];
+            let h1 = '';
+            let h2 = '';
+            let h3 = '';
+            if (mode == 'diagnosis') {
+                h1 = 'รายงานตามประเภทการวินิฉฉัย';
+                h2 = 'ประเภทการวินิฉฉัย';
+                h3 = 'สัดส่วนประเภทการวินิฉฉัย';
+                records = await countAllDiagnosisByDate(startDate, endDate, location);
+            } else if (mode == 'medicine') {
+                h1 = 'รายงานตามการใช้ยา';
+                h2 = 'การใช้ยา';
+                h3 = 'สัดส่วนการใช้ยา';
+                records = await countAllMedicineNameByDate(startDate, endDate, location);
+            } else if (mode == 'department') {
+                h1 = 'รายงานตามแผนก';
+                h2 = 'แผนก';
+                h3 = 'สัดส่วนตามแผนก';
+                records = await countAllOpdCardByDepartment(startDate, endDate, location);
+            }
+            let html = `
+
+                <h3 class="text-lg font-medium text-navy mb-4">${h1}</h3>
+                <p class="mb-4">ช่วงวันที่: ${new Date(startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })} - ${new Date(endDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${h2}</th>
+                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
+                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ร้อยละ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                  `;
+            //const totalCount = records.length;
+            const totalCount = records.reduce((sum, item) => sum + item.qty, 0);
+            let totalPercentage = 0;
+            const chartLabels = [];
+            const chartData = [];
+            const chartColors = ['rgba(54, 162, 235, 0.8)', 'rgba(75, 192, 192, 0.8)', 'rgba(255, 206, 86, 0.8)', 'rgba(255, 99, 132, 0.8)', 'rgba(153, 102, 255, 0.8)'];
+            //Object.keys(records).forEach((type, index) => {
+            records.forEach((type, index) => {
+                /*const {
+                    name,
+                    count
+                } = serviceTypes[type];*/
+                console.log(type)
+                const count = type.qty;
+                const name = type.name;
+                const percentage = totalCount > 0 ? (count / totalCount * 100).toFixed(2) : 0;
+                totalPercentage += parseFloat(percentage);
+                chartLabels.push(name);
+                chartData.push(count);
+                html += `
+
+                                <tr>
+                                    <td class="py-2 px-4 border-b">${name}</td>
+                                    <td class="py-2 px-4 border-b">${count}</td>
+                                    <td class="py-2 px-4 border-b">${percentage}%</td>
+                                </tr>
+`;
+            });
+            html += `
+
+                                    <tr class="bg-gray-100 font-medium">
+                                        <td class="py-2 px-4 border-b">รวม</td>
+                                        <td class="py-2 px-4 border-b">${totalCount}</td>
+                                        <td class="py-2 px-4 border-b">${totalPercentage.toFixed(2)}%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                  `;
+            reportResults.innerHTML = html;
+            // Create chart
+            createChart('pie', h3, chartLabels, chartData, chartColors);
+        }
+        // Generate Service Type Report
+        //function generateServiceTypeReport(records, startDate, endDate) {
+        async function generateServiceTypeReport(startDate, endDate, location) {
+            // Group records by service type
+            let records = await countAllServiceTypeByDate(startDate, endDate, location);
+           
+            /*const serviceTypes = {
                 consulted: {
                     name: 'ปรึกษาพยาบาล',
                     count: 0
@@ -2738,58 +3037,64 @@
                     serviceTypes[record.serviceType].count++;
                 }
             });
+            console.log(serviceTypes)*/
             let html = `
 
-                                                                                                                        <h3 class="text-lg font-medium text-navy mb-4">รายงานตามประเภทการให้บริการ</h3>
-                                                                                                                        <p class="mb-4">ช่วงวันที่: ${new Date(startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })} - ${new Date(endDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</p>
-                                                                                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                                                                                            <div>
-                                                                                                                                <div class="overflow-x-auto">
-                                                                                                                                    <table class="min-w-full bg-white">
-                                                                                                                                        <thead class="bg-gray-100">
-                                                                                                                                            <tr>
-                                                                                                                                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภทการให้บริการ</th>
-                                                                                                                                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
-                                                                                                                                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ร้อยละ</th>
-                                                                                                                                            </tr>
-                                                                                                                                        </thead>
-                                                                                                                                        <tbody>
+                <h3 class="text-lg font-medium text-navy mb-4">รายงานตามประเภทการให้บริการ</h3>
+                <p class="mb-4">ช่วงวันที่: ${new Date(startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })} - ${new Date(endDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภทการให้บริการ</th>
+                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
+                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ร้อยละ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                   `;
-            const totalCount = records.length;
+            //const totalCount = records.length;
+            const totalCount = records.reduce((sum, item) => sum + item.qty, 0);
             let totalPercentage = 0;
             const chartLabels = [];
             const chartData = [];
             const chartColors = ['rgba(54, 162, 235, 0.8)', 'rgba(75, 192, 192, 0.8)', 'rgba(255, 206, 86, 0.8)', 'rgba(255, 99, 132, 0.8)', 'rgba(153, 102, 255, 0.8)'];
-            Object.keys(serviceTypes).forEach((type, index) => {
-                const {
+            //Object.keys(records).forEach((type, index) => {
+            records.forEach((type, index) => {
+                /*const {
                     name,
                     count
-                } = serviceTypes[type];
+                } = serviceTypes[type];*/
+                console.log(type)
+                const count = type.qty;
+                const name = type.name;
                 const percentage = totalCount > 0 ? (count / totalCount * 100).toFixed(2) : 0;
                 totalPercentage += parseFloat(percentage);
                 chartLabels.push(name);
                 chartData.push(count);
                 html += `
 
-                                                                                                                                            <tr>
-                                                                                                                                                <td class="py-2 px-4 border-b">${name}</td>
-                                                                                                                                                <td class="py-2 px-4 border-b">${count}</td>
-                                                                                                                                                <td class="py-2 px-4 border-b">${percentage}%</td>
-                                                                                                                                            </tr>
-                    `;
+                                <tr>
+                                    <td class="py-2 px-4 border-b">${name}</td>
+                                    <td class="py-2 px-4 border-b">${count}</td>
+                                    <td class="py-2 px-4 border-b">${percentage}%</td>
+                                </tr>
+`;
             });
             html += `
 
-                                                                                                                                            <tr class="bg-gray-100 font-medium">
-                                                                                                                                                <td class="py-2 px-4 border-b">รวม</td>
-                                                                                                                                                <td class="py-2 px-4 border-b">${totalCount}</td>
-                                                                                                                                                <td class="py-2 px-4 border-b">${totalPercentage.toFixed(2)}%</td>
-                                                                                                                                            </tr>
-                                                                                                                                        </tbody>
-                                                                                                                                    </table>
-                                                                                                                                </div>
-                                                                                                                            </div>
-                                                                                                                        </div>
+                                    <tr class="bg-gray-100 font-medium">
+                                        <td class="py-2 px-4 border-b">รวม</td>
+                                        <td class="py-2 px-4 border-b">${totalCount}</td>
+                                        <td class="py-2 px-4 border-b">${totalPercentage.toFixed(2)}%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
                   `;
             reportResults.innerHTML = html;
             // Create chart
