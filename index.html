@@ -926,6 +926,26 @@
                       // doc.data() is never undefined for query doc snapshots
                       console.log(doc.id, " => ", doc.data());
                 });*/
+				firebase.auth().currentUser.getIdTokenResult(true).then((result) => {
+					//console.log("authTime:", result.authTime);
+					//console.log("authTime (Date):", new Date(result.authTime));
+					
+					  const authTime = new Date(result.authTime);
+					  const now = new Date();
+					  const diffMinutes = (now.getTime() - authTime.getTime()) / 60000;
+
+				      if (diffMinutes > 12 * 60){
+						logout();
+					  }
+					  
+					  //console.log("authTime:", authTime.toISOString());
+					  //console.log("Now:", now.toISOString());
+					  console.log("Diff (minutes):", diffMinutes);
+					  
+				  }) .catch((error) => {
+					console.error("Error getting ID token result:", error);
+			    });;
+  
                 if (snapshot.docs.length > 0) {
                     userDb = snapshot.docs[0];
                     let firstDoc = snapshot.docs[0];
