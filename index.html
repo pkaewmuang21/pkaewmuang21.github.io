@@ -172,6 +172,7 @@
         <main class="flex-grow container mx-auto px-4 py-6">
             <div id="auth-section" class="fixed inset-0 bg-black bg-opacity-50  items-center flex  justify-center z-50">
                 <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+					<!--
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Login</h3>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
@@ -183,6 +184,10 @@
                     </div>
                     <div class="flex space-x-4">
                         <button onclick="login()" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">Login</button>
+                    </div>
+					-->
+					   <div class="flex space-x-4">
+                        <button onclick="googleLogin()" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">Sign in with Google</button>
                     </div>
                 </div>
             </div>
@@ -893,23 +898,11 @@
                 }
             }
         };
-        /*const firebaseConfig = {
-            apiKey: "AIzaSyCuLKCY253010End4NaXs8vo-PQEGXIp54",
-            authDomain: "test-date01.firebaseapp.com",
-            databaseURL: "https://test-date01-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "test-date01",
-            storageBucket: "test-date01.firebasestorage.app",
-            messagingSenderId: "220542963321",
-            appId: "1:220542963321:web:9edf16a12d23f369754ea8"
-        };*/
+
         const firebaseConfig = {
             apiKey: "AIzaSyC5WWSxG9iLQMZqO057qZ-Q4EA19d3Q1eE",
             authDomain: "pg-firstaid.firebaseapp.com",
-            databaseURL: "https://pg-firstaid-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "pg-firstaid",
-            storageBucket: "pg-firstaid.firebasestorage.app",
-            messagingSenderId: "85440797529",
-            appId: "1:85440797529:web:9e146646682f1190024a48"
+            projectId: "pg-firstaid"
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -1555,6 +1548,20 @@
 
     
         });
+		function googleLogin() {
+		  var provider = new firebase.auth.GoogleAuthProvider();
+		//firebase.auth().signInWithRedirect(provider);
+			
+			firebase.auth().signInWithPopup(provider)
+			  .then(function(result) {
+				var user = result.user;
+				console.log("Sign-in success", user);
+				//alert("ยินดีต้อนรับ " + user.displayName);
+			  })
+			  .catch(function(error) {
+				console.error(error);
+			  });
+		}
         function login() {
             //document.getElementById('auth-section').classList.remove('hidden');
             //document.getElementById('editModal').classList.add('flex');
