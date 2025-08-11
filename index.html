@@ -267,11 +267,19 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
                             <h3 class="text-lg font-medium text-navy mb-3">ข้อมูลพนักงาน</h3>
                             <div class="mb-3"></div>
-                            <div class="mb-3">
-                                <label class="block text-gray-700 text-sm font-medium mb-1" for="employeeId1">
-                                    รหัสพนักงาน <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" id="employeeId1" name="employeeId1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                            <div class="grid grid-cols-2 gap-1">
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="employeeId1">
+                                        รหัสพนักงาน <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" id="employeeId1" name="employeeId1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="department1">
+                                        แผนก 
+                                    </label>
+                                    <input type="text" id="department1" name="department1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                                </div>
                             </div>
                             <div class="grid grid-cols-2 gap-1">
                                 <div class="mb-3">
@@ -589,7 +597,7 @@
     <option value="monthly">รายงานประจำเดือน</option>
         -->
                                 <option value="serviceType">รายงานตามประเภทการให้บริการ</option>
-                                <!--<option value="department">รายงานตามแผนก</option>-->
+                                <option value="department">รายงานตามแผนก</option>
                                 <option value="diagnosis">รายงานตามการวินิฉัย</option>
                                 <option value="medicine">รายงานตามการใช้ยา</option>
                             </select>
@@ -1170,7 +1178,7 @@
                 const employeeId = document.getElementById('employeeId3').value;
                 //const firstName = document.getElementById('firstName3').value;
                 //const lastName = document.getElementById('lastName3').value;
-                //const department = document.getElementById('department3').value;
+                const department = document.getElementById('department3').value;
                 const birthdate = document.getElementById('birthdate3').value;
                 const phone = document.getElementById('phone3').value;
                 const congenitalDisease = document.getElementById('congenitalDisease3').value;
@@ -1188,8 +1196,8 @@
                     db.collection("employees").doc(customerDb.id).update({
                         employeeId: encryptedValue,
                         /*firstName: firstName,
-                        lastName: lastName,
-                        department: department,*/
+                        lastName: lastName,*/
+                        department: department,
                         birthdate: birthdate,
                         phone: phone,
                         congenitalDisease: congenitalDisease,
@@ -1230,7 +1238,7 @@
             const employeeId = document.getElementById('employeeId1').value;
             //const firstName = document.getElementById('firstName1').value;
             //const lastName = document.getElementById('lastName1').value;
-            //const department = document.getElementById('department1').value;
+            const department = document.getElementById('department1').value;
             const birthdate = document.getElementById('birthdate1').value;
             const phone = document.getElementById('phone1').value;
             const congenitalDisease = document.getElementById('congenitalDisease1').value;
@@ -1248,7 +1256,7 @@
                         employeeId: encryptedValue,
                         //firstName: firstName,
                         //lastName: lastName,
-                        //department: department,
+                        department: department,
                         birthdate: birthdate,
                         phone: phone,
                         congenitalDisease: congenitalDisease,
@@ -1270,7 +1278,7 @@
                             document.getElementById('employeeId1').value = '';
                             //document.getElementById('firstName1').value = '';
                             //document.getElementById('lastName1').value = '';
-                            //document.getElementById('department1').value = '';
+                            document.getElementById('department1').value = '';
                             document.getElementById('birthdate1').value = '';
                             document.getElementById('phone1').value = '';
                             document.getElementById('congenitalDisease1').value = '';
@@ -1369,7 +1377,7 @@
                     // Fill form with employee data
                     //document.getElementById('firstName').value = employeeData.firstName || '';
                     //document.getElementById('lastName').value = employeeData.lastName || '';
-                    //document.getElementById('department').value = employeeData.department || '';
+                    document.getElementById('department').value = employeeData.department || '';
                     document.getElementById('birthdate').value = employeeData.birthdate || '';
                     document.getElementById('phone').value = employeeData.phone || '';
                     document.getElementById('congenitalDisease').value = employeeData.congenitalDisease || '';
@@ -1780,7 +1788,7 @@
             const employeeId = document.getElementById('employeeId').value;
             //const firstName = document.getElementById('firstName').value;
             //const lastName = document.getElementById('lastName').value;
-            //const department = document.getElementById('department').value;
+            const department = document.getElementById('department').value;
             const birthdate = document.getElementById('birthdate').value;
             const phone = document.getElementById('phone').value;
             const congenitalDisease = document.getElementById('congenitalDisease').value;
@@ -1813,7 +1821,7 @@
                 sampleData.employees[employeeId] = {
                     //firstName,
                     //lastName,
-                    //department,
+                    department,
                     birthdate,
                     phone,
                     congenitalDisease,
@@ -1952,6 +1960,7 @@
                 .map(emp => ({
                     id: emp.id,
                     employeeId: emp.decryptedEmployeeId,
+                    department: emp.department,
                     // เพิ่มฟิลด์อื่น ๆ ตามต้องการ เช่น firstName, lastName ...
                 }));
             /*for (const data of matchedEmployees2) {
@@ -2048,9 +2057,9 @@
                     <table class="min-w-full bg-white">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="py-2 px-4 border-b text-center text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสพนักงาน</th>
+                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสพนักงาน</th>
                                 <!--<th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>-->
-                                <!--<th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แผนก</th>-->
+                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แผนก</th>
                                 <th class="py-2 px-4 border-b text-center text-xs font-medium text-gray-500 uppercase tracking-wider">การดำเนินการ</th>
                             </tr>
                         </thead>
@@ -2067,9 +2076,9 @@
             employees.forEach(employee => {	
                 html += `
                     <tr>
-                        <td class="py-2 px-4 text-center border-b">${employee.employeeId}</td>
+                        <td class="py-2 px-4 border-b">${employee.employeeId}</td>
                         <!--<td class="py-2 px-4 border-b">${employee.firstName} ${employee.lastName}</td>-->
-                        <!--<td class="py-2 px-4 border-b">${employee.department || '-'}</td>-->
+                        <td class="py-2 px-4 border-b">${employee.department || '-'}</td>
                         <td class="py-2 px-4 text-center border-b">
                             <button class="view-records-btn text-white bg-turquoise hover:bg-turquoise-light px-3 py-1 rounded-md text-sm" data-id="${employee.id}" data-employee-id="${employee.employeeId}" >
                             <!--<button class="view-records-btn text-white bg-turquoise hover:bg-turquoise-light px-3 py-1 rounded-md text-sm" data-id="${employee.id}" data-employee-id="${employee.employeeId}" data-employee-name="${employee.firstName} ${employee.lastName}">-->
@@ -2257,11 +2266,19 @@
                          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
                         <h3 class="text-lg font-medium text-navy mb-3">ข้อมูลพนักงาน</h3>
                         <div class="mb-3"></div>
+                        <div class="grid grid-cols-2 gap-1">
                         <div class="mb-3">
                             <label class="block text-gray-700 text-sm font-medium mb-1" for="employeeId3">
                                 รหัสพนักงาน <span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="employeeId3" name="employeeId3" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 text-sm font-medium mb-1" for="department3">
+                                แผนก 
+                            </label>
+                            <input type="text" id="department3" name="department3" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                        </div>
                         </div>
 						<div class="grid grid-cols-2 gap-1">
                             <div class="mb-3">
@@ -2295,7 +2312,7 @@
 						
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-medium mb-1" for="department3">
-                                แผนก <span class="text-red-500">*</span>
+                                แผนก 
                             </label>
                             <input type="text" id="department3" name="department3" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                         </div>
@@ -2394,8 +2411,8 @@
             const decryptedValue = await decryptTextFnCached(customerDb.data().employeeId);
             document.getElementById('employeeId3').value = decryptedValue;
             /*document.getElementById('firstName3').value = customerDb.data().firstName;
-            document.getElementById('lastName3').value = customerDb.data().lastName;
-            document.getElementById('department3').value = customerDb.data().department;*/
+            document.getElementById('lastName3').value = customerDb.data().lastName;*/
+            document.getElementById('department3').value = customerDb.data().department;
             document.getElementById('birthdate3').value = customerDb.data().birthdate;
             document.getElementById('phone3').value = customerDb.data().phone;
             document.getElementById('allergies3').value = customerDb.data().allergies;
