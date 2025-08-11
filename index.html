@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -272,21 +273,34 @@
                                 </label>
                                 <input type="text" id="employeeId1" name="employeeId1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                             </div>
-                            <div class="grid grid-cols-2 gap-3 mb-3">
-                                <div>
-                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="firstName1">
-                                        ชื่อ <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" id="firstName1" name="firstName1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                            <div class="grid grid-cols-2 gap-1">
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="birthdate">วันเดือนปีเกิด</label>
+                                    <input type="date" id="birthdate1" name="birthdate1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
                                 </div>
-                                <div>
-                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="lastName1">
-                                        นามสกุล <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" id="lastName1" name="lastName1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="phone">เบอร์โทรศัพท์</label>
+                                    <input type="tel" id="phone1" name="phone1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
                                 </div>
                             </div>
+                            <!--
+    <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+            <label class="block text-gray-700 text-sm font-medium mb-1" for="firstName1">
+                ชื่อ <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="firstName1" name="firstName1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+        </div>
+        <div>
+            <label class="block text-gray-700 text-sm font-medium mb-1" for="lastName1">
+                นามสกุล <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="lastName1" name="lastName1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+        </div>
+    </div>
+    -->
                         </div>
+                        <!--
                         <div class="grid grid-cols-2 gap-1">
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-medium mb-1" for="department1">
@@ -305,6 +319,7 @@
                                 </div>
                             </div>
                         </div>
+                            -->
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
                             <div class="mb-3">
                                 <label class="block text-gray-700 text-sm font-medium mb-1" for="congenitalDisease">โรคประจำตัว</label>
@@ -354,6 +369,7 @@
                                 </label>
                                 <input type="text" id="employeeId2" name="employeeId2" disabled class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                             </div>
+                            <!--
                             <div class="grid grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label class="block text-gray-700 text-sm font-medium mb-1" for="firstName2">
@@ -368,6 +384,8 @@
                                     <input type="text" id="lastName2" name="lastName2" disabled class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                                 </div>
                             </div>
+
+                            -->
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
@@ -568,10 +586,10 @@
                             <label class="block text-gray-700 text-sm font-medium mb-1" for="reportType">ประเภทรายงาน</label>
                             <select id="reportType" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
                                 <!--<option value="daily">รายงานประจำวัน</option>
-                                <option value="monthly">รายงานประจำเดือน</option>
-                                    -->
+    <option value="monthly">รายงานประจำเดือน</option>
+        -->
                                 <option value="serviceType">รายงานตามประเภทการให้บริการ</option>
-                                <option value="department">รายงานตามแผนก</option>
+                                <!--<option value="department">รายงานตามแผนก</option>-->
                                 <option value="diagnosis">รายงานตามการวินิฉัย</option>
                                 <option value="medicine">รายงานตามการใช้ยา</option>
                             </select>
@@ -907,8 +925,11 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+		const functions = firebase.functions();
         var userDb;
         var customerDb;
+		
+
         auth.onAuthStateChanged(async user => {
             /*const authSection = document.getElementById('auth-section');
             const appSection = document.getElementById('app-section');
@@ -1069,37 +1090,106 @@
             document.getElementById('customer-result').classList.add('hidden');
             document.getElementById('customer-insert').classList.remove('hidden');
         });
+		
+        const encryptText = functions.httpsCallable("encryptText");
+        const cache = new Map();
+
+        async function encryptTextFnCached(text) {
+            if (cache.has(text)) {
+                // ถ้ามี cache อยู่แล้ว ให้คืนค่าจาก cache เลย
+                console.log("From cache:", text);
+                return cache.get(text);
+            }
+
+            // ถ้าไม่มี cache เรียกฟังก์ชันและเก็บผลลัพธ์
+            try {
+                const result = await encryptText({ text });
+                const encrypted = result.data.encrypted;
+                cache.set(text, encrypted);
+                return encrypted;
+            } catch (error) {
+                console.error("Error:", error);
+                throw error;
+            }
+        }
+
+	    async function encryptTextFn(text){
+			
+		  try {
+			const result = await encryptText({ text }); 
+			console.log("Encrypted:", result.data.encrypted);
+			return result.data.encrypted; // ต้อง return ค่านี้ออกไป
+		  } catch (error) {
+			console.error("Error:", error);
+			throw error; // โยน error ต่อให้คนเรียกจัดการ
+		  }
+        }
+
+        const decryptText = functions.httpsCallable('decryptText');
+        const decryptCache = new Map();
+
+        async function decryptTextFnCached(encrypted) {
+            if (decryptCache.has(encrypted)) {
+                console.log("Decrypt from cache:", encrypted);
+                return decryptCache.get(encrypted);
+            }
+
+            try {
+                const result = await decryptText({ encrypted });
+                const decrypted = result.data.decrypted;
+                decryptCache.set(encrypted, decrypted);
+                return decrypted;
+            } catch (error) {
+                console.error("Error:", error);
+                throw error;
+            }
+        }
+
+		async function decryptTextFn(encrypted){
+		
+			try {
+				const result = await decryptText({ encrypted }); 
+				console.log("Decrypted:", result.data.decrypted);
+				return result.data.decrypted; // ต้อง return ค่านี้ออกไป
+			  } catch (error) {
+				console.error("Error:", error);
+				throw error; // โยน error ต่อให้คนเรียกจัดการ
+			  }
+		
+        }
+			
+	
         function back2SearchBtn3() {
             //document.getElementById('searchResults').classList.add('hidden');
             displayEmployeeSearchResults(matchedEmployees);
         }
-        function saveCustomerBtn3() {
+         function saveCustomerBtn3() {
             if (confirm('คุณต้องการบันทึกใช่หรือไม่?')) {
 
 
                 const employeeId = document.getElementById('employeeId3').value;
-                const firstName = document.getElementById('firstName3').value;
-                const lastName = document.getElementById('lastName3').value;
-                const department = document.getElementById('department3').value;
+                //const firstName = document.getElementById('firstName3').value;
+                //const lastName = document.getElementById('lastName3').value;
+                //const department = document.getElementById('department3').value;
                 const birthdate = document.getElementById('birthdate3').value;
                 const phone = document.getElementById('phone3').value;
                 const congenitalDisease = document.getElementById('congenitalDisease3').value;
                 const allergies = document.getElementById('allergies3').value;
-                if (!employeeId || !firstName || !lastName || !department) {
+                if (!employeeId /*|| !firstName || !lastName || !department*/) {
                     showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
                     return;
                 }
                 showLoading('กำลังบันทึกข้อมูล...');
                 // Simulate API call with timeout
-                setTimeout(() => {
+                setTimeout(async () => {
 
 
-
+                    const encryptedValue = await encryptTextFnCached(employeeId);
                     db.collection("employees").doc(customerDb.id).update({
-                        employeeId: employeeId,
-                        firstName: firstName,
+                        employeeId: encryptedValue,
+                        /*firstName: firstName,
                         lastName: lastName,
-                        department: department,
+                        department: department,*/
                         birthdate: birthdate,
                         phone: phone,
                         congenitalDisease: congenitalDisease,
@@ -1120,8 +1210,8 @@
                             showNotification('success', 'สำเร็จ', 'บันทึกข้อมูลสำเร็จ');
 
                             document.getElementById('employeeId2').value = employeeId;
-                            document.getElementById('firstName2').value = firstName;
-                            document.getElementById('lastName2').value = lastName;
+                            //document.getElementById('firstName2').value = firstName;
+                            //document.getElementById('lastName2').value = lastName;
                             document.getElementById('congenitalDisease2').value = congenitalDisease;
                             document.getElementById('allergies2').value = allergies;
 
@@ -1135,30 +1225,30 @@
             }
         }
 
-        saveCustomerBtn.addEventListener('click', () => {
+       saveCustomerBtn.addEventListener('click', () => {
 
             const employeeId = document.getElementById('employeeId1').value;
-            const firstName = document.getElementById('firstName1').value;
-            const lastName = document.getElementById('lastName1').value;
-            const department = document.getElementById('department1').value;
+            //const firstName = document.getElementById('firstName1').value;
+            //const lastName = document.getElementById('lastName1').value;
+            //const department = document.getElementById('department1').value;
             const birthdate = document.getElementById('birthdate1').value;
             const phone = document.getElementById('phone1').value;
             const congenitalDisease = document.getElementById('congenitalDisease1').value;
             const allergies = document.getElementById('allergies1').value;
-            if (!employeeId || !firstName || !lastName || !department) {
+            if (!employeeId /*|| !firstName || !lastName || !department*/) {
                 showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
                 return;
             }
             if (confirm('คุณต้องการบันทึกใช่หรือไม่?')) {
                 showLoading('กำลังบันทึกข้อมูล...');
                 // Simulate API call with timeout
-                setTimeout(() => {
-
+                setTimeout(async () => {
+                    const encryptedValue = await encryptTextFnCached(employeeId);
                     db.collection("employees").add({
-                        employeeId: employeeId,
-                        firstName: firstName,
-                        lastName: lastName,
-                        department: department,
+                        employeeId: encryptedValue,
+                        //firstName: firstName,
+                        //lastName: lastName,
+                        //department: department,
                         birthdate: birthdate,
                         phone: phone,
                         congenitalDisease: congenitalDisease,
@@ -1172,15 +1262,15 @@
                             showNotification('success', 'สำเร็จ', 'บันทึกข้อมูลสำเร็จ');
 
                             document.getElementById('employeeId2').value = employeeId;
-                            document.getElementById('firstName2').value = firstName;
-                            document.getElementById('lastName2').value = lastName;
+                            //document.getElementById('firstName2').value = firstName;
+                            //document.getElementById('lastName2').value = lastName;
                             document.getElementById('congenitalDisease2').value = congenitalDisease;
                             document.getElementById('allergies2').value = allergies;
 
                             document.getElementById('employeeId1').value = '';
-                            document.getElementById('firstName1').value = '';
-                            document.getElementById('lastName1').value = '';
-                            document.getElementById('department1').value = '';
+                            //document.getElementById('firstName1').value = '';
+                            //document.getElementById('lastName1').value = '';
+                            //document.getElementById('department1').value = '';
                             document.getElementById('birthdate1').value = '';
                             document.getElementById('phone1').value = '';
                             document.getElementById('congenitalDisease1').value = '';
@@ -1277,9 +1367,9 @@
                 const employeeData = sampleData.employees[employeeId];
                 if (employeeData) {
                     // Fill form with employee data
-                    document.getElementById('firstName').value = employeeData.firstName || '';
-                    document.getElementById('lastName').value = employeeData.lastName || '';
-                    document.getElementById('department').value = employeeData.department || '';
+                    //document.getElementById('firstName').value = employeeData.firstName || '';
+                    //document.getElementById('lastName').value = employeeData.lastName || '';
+                    //document.getElementById('department').value = employeeData.department || '';
                     document.getElementById('birthdate').value = employeeData.birthdate || '';
                     document.getElementById('phone').value = employeeData.phone || '';
                     document.getElementById('congenitalDisease').value = employeeData.congenitalDisease || '';
@@ -1294,8 +1384,8 @@
 
         saveOpdCardBtn.addEventListener('click', () => {
             const employeeId = document.getElementById('employeeId2').value;
-            const firstName = document.getElementById('firstName2').value;
-            const lastName = document.getElementById('lastName2').value;
+            //const firstName = document.getElementById('firstName2').value;
+            //const lastName = document.getElementById('lastName2').value;
 
             const visitDate = document.getElementById('visitDate2').value;
             const esiTriage = document.getElementById('esiTriage2').value;
@@ -1312,7 +1402,7 @@
             const followUp = document.querySelector('input[name="followUp2"]:checked').value;
             //console.log(followUpValue); // ได้ "Y" หรือ "N"
          
-            if (!employeeId || !firstName || !lastName || !visitDate || !esiTriage || !serviceType2) {
+            if (!employeeId /*|| !firstName || !lastName*/ || !visitDate || !esiTriage || !serviceType2) {
                 showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
                 return;
             }
@@ -1657,6 +1747,30 @@
             auth.signOut();
         }
 
+		let timeoutId;
+
+		// ฟังก์ชันที่ต้องการเรียกเมื่อไม่มี activity เกิน 2 ชั่วโมง
+		function onInactivity() {
+		  console.log("ไม่มี activity เกิน 2 ชั่วโมง! เรียกฟังก์ชันที่นี่ได้เลย");
+		  // ตัวอย่าง: เรียก firebase function หรือทำอย่างอื่น
+		  logout();
+		}
+
+		// รีเซ็ต timer ทุกครั้งที่มี activity
+		function resetTimer() {
+		  clearTimeout(timeoutId);
+		  // ตั้ง timeout ใหม่ 2 ชั่วโมง = 2 * 60 * 60 * 1000 ms = 7,200,000 ms
+		  timeoutId = setTimeout(onInactivity, 1 * 60 * 60 * 1000);
+		}
+
+		// ฟัง event ที่แสดง activity ผู้ใช้
+		window.addEventListener('mousemove', resetTimer);
+		window.addEventListener('keydown', resetTimer);
+		window.addEventListener('scroll', resetTimer);
+		window.addEventListener('touchstart', resetTimer);
+
+		// เริ่มนับตั้งแต่โหลดเพจ
+		resetTimer();
 
         //
         // Submit Medical Record Form
@@ -1664,9 +1778,9 @@
             e.preventDefault();
             // Get form data
             const employeeId = document.getElementById('employeeId').value;
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const department = document.getElementById('department').value;
+            //const firstName = document.getElementById('firstName').value;
+            //const lastName = document.getElementById('lastName').value;
+            //const department = document.getElementById('department').value;
             const birthdate = document.getElementById('birthdate').value;
             const phone = document.getElementById('phone').value;
             const congenitalDisease = document.getElementById('congenitalDisease').value;
@@ -1686,7 +1800,7 @@
             const followUp = document.querySelector('input[name="followUp"]:checked').value;
             const serviceType = document.getElementById('serviceType').value;
             // Validate required fields
-            if (!employeeId || !firstName || !lastName || !department || !visitDate || !esiTriage || !chiefComplaint || !serviceType) {
+            if (!employeeId || /*!firstName || !lastName || !department ||*/ !visitDate || !esiTriage || !chiefComplaint || !serviceType) {
                 showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
                 return;
             }
@@ -1697,9 +1811,9 @@
                 const recordId = 'R' + String(Object.keys(sampleData.medicalRecords).length + 1).padStart(3, '0');
                 // Save employee data
                 sampleData.employees[employeeId] = {
-                    firstName,
-                    lastName,
-                    department,
+                    //firstName,
+                    //lastName,
+                    //department,
                     birthdate,
                     phone,
                     congenitalDisease,
@@ -1753,9 +1867,10 @@
 
             showLoading('กำลังค้นหาข้อมูล...');
             // Simulate API call with timeout
-            setTimeout(() => {
+            setTimeout(async () => {
                 // First try to search by employee ID
-                searchRecordsByName(searchValue);
+
+                await searchRecordsByName(searchValue);
                 /*if (sampleData.employees[searchValue]) {
                     // Found by employee ID
                     const employeeData = sampleData.employees[searchValue];
@@ -1789,7 +1904,7 @@
                                                                                                                                 </div>
                                                                                                                                 <div class="ml-3">
                                                                                                                                     <p class="text-sm text-yellow-700">
-                              พบข้อมูลพนักงาน ${employeeData.firstName} ${employeeData.lastName} แต่ไม่พบประวัติการรักษา
+                              พบข้อมูลพนักงาน ${employeeData.employeeId}  แต่ไม่พบประวัติการรักษา
                             </p>
                                                                                                                                 </div>
                                                                                                                             </div>
@@ -1800,7 +1915,7 @@
         }
         var matchedEmployees = [];
         // Search Records by Name
-        function searchRecordsByName(name) {
+        async function searchRecordsByName(name) {
             matchedEmployees = [];
             // Search by first name
             /*Object.keys(sampleData.employees).forEach(employeeId => {
@@ -1816,35 +1931,85 @@
             const searchText = name;
             const keywords = searchText.trim().toLowerCase().split(/\s+/); // ['aa', 'bb', 'cc']
 
-            db.collection("employees").get().then(snapshot => {
-                //const matchedEmployees = [];
+            const snapshot = await db.collection("employees").get();
+            //db.collection("employees").get().then(snapshot => {
+            //const matchedEmployees = [];
+            
+            const employees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                snapshot.forEach(doc => {
+            const decryptedList = await Promise.all(
+                employees.map(emp => decryptTextFnCached(emp.employeeId))
+            );
+
+            const matchedEmployees2 = employees.filter((emp, i) => {
+                const text = decryptedList[i];
+                return keywords.every(keyword => text.includes(keyword));
+            }).map((emp, i) => ({
+                id: emp.id,
+                employeeId: decryptedList[i],
+                // ใส่ฟิลด์อื่น ๆ ถ้าต้องการ
+            }));
+
+            for (const data of matchedEmployees2) {
+                const text = data.employeeId;
+                // ต้อง match ทุกคำ (AND)
+                const isMatch = keywords.every(keyword =>
+                    text.includes(keyword)
+                );
+
+                if (isMatch) {
+                    //  results.push({ id: doc.id, ...data });
+                    matchedEmployees.push({
+                        id: data.id,
+                        employeeId: data.employeeId,
+                        //employeeId: data.employeeId,
+                        //firstName: data.firstName,
+                        //lastName: data.lastName,
+                        //department: data.department
+                    });
+                }
+            }
+
+                /*for (const doc of snapshot.docs) {
+                //snapshot.forEach(doc =>  {
                     const data = doc.data();
-                    const text = `${data.employeeId} ${data.firstName} ${data.lastName}`.toLowerCase();
+                    //const text = `${data.employeeId} ${data.firstName} ${data.lastName}`.toLowerCase();
+                    //const text = `${data.employeeId}`.toLowerCase();
+                    try {
+                        //console.log(doc.id)
+                        if (data.employeeId.length > 10) {
+                            const text = await decryptTextFnCached(data.employeeId);
+                            // ต้อง match ทุกคำ (AND)
+                            const isMatch = keywords.every(keyword =>
+                                text.includes(keyword)
+                            );
 
-                    // ต้อง match ทุกคำ (AND)
-                    const isMatch = keywords.every(keyword =>
-                        text.includes(keyword)
-                    );
-
-                    if (isMatch) {
-                        //  results.push({ id: doc.id, ...data });
-                        matchedEmployees.push({
-                            id: doc.id,
-                            employeeId: data.employeeId,
-                            firstName: data.firstName,
-                            lastName: data.lastName,
-                            department: data.department
-                        });
-                    }
-                });
+                            if (isMatch) {
+                                //  results.push({ id: doc.id, ...data });
+                                matchedEmployees.push({
+                                    id: doc.id,
+                                    employeeId: text,
+                                    //employeeId: data.employeeId,
+                                    //firstName: data.firstName,
+                                    //lastName: data.lastName,
+                                    //department: data.department
+                                });
+                            }
+                        } else {
+                            const encryptedValue = await encryptTextFnCached(data.employeeId);
+                            db.collection("employees").doc(doc.id).update({
+                                employeeId: encryptedValue
+                            });
+                        }
+                    } catch {}
+                };*/
 
                 //console.log("ผลลัพธ์ที่พบ:", matchedEmployees);
 
                 if (matchedEmployees.length > 0) {
                     matchedEmployees.sort((a, b) => {
-                        return (a.firstName + ' ' + a.lastName).localeCompare(b.firstName + ' ' + b.lastName);
+                        //return (a.firstName + ' ' + a.lastName).localeCompare(b.firstName + ' ' + b.lastName);
+                        return (a.employeeId).localeCompare(b.employeeId);
                     });
                     displayEmployeeSearchResults(matchedEmployees);
                 } else {
@@ -1868,33 +2033,41 @@
                                 `;
                     recordDetail.classList.add('hidden');
                 }
-            });
+            //});
         }
         // Display Employee Search Results
-        function displayEmployeeSearchResults(employees) {
+        async function displayEmployeeSearchResults(employees) {
             let html = `
 
                 <div class="overflow-x-auto">
                     <table class="min-w-full bg-white">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสพนักงาน</th>
-                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
-                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แผนก</th>
-                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การดำเนินการ</th>
+                                <th class="py-2 px-4 border-b text-center text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสพนักงาน</th>
+                                <!--<th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>-->
+                                <!--<th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แผนก</th>-->
+                                <th class="py-2 px-4 border-b text-center text-xs font-medium text-gray-500 uppercase tracking-wider">การดำเนินการ</th>
                             </tr>
                         </thead>
                         <tbody>
                   `;
-            employees.forEach(employee => {
-                html += `
 
+			/*const encryptedList = await Promise.all(
+			  employees.map(emp => encryptTextFn(emp.employeeId))
+			);
+			employees.forEach((emp, index) => {
+			  emp.employeeIdEnc = encryptedList[index];
+			});*/
+					
+            employees.forEach(employee => {	
+                html += `
                     <tr>
-                        <td class="py-2 px-4 border-b">${employee.employeeId}</td>
-                        <td class="py-2 px-4 border-b">${employee.firstName} ${employee.lastName}</td>
-                        <td class="py-2 px-4 border-b">${employee.department || '-'}</td>
-                        <td class="py-2 px-4 border-b">
-                            <button class="view-records-btn text-white bg-turquoise hover:bg-turquoise-light px-3 py-1 rounded-md text-sm" data-id="${employee.id}" data-employee-id="${employee.employeeId}" data-employee-name="${employee.firstName} ${employee.lastName}">
+                        <td class="py-2 px-4 text-center border-b">${employee.employeeId}</td>
+                        <!--<td class="py-2 px-4 border-b">${employee.firstName} ${employee.lastName}</td>-->
+                        <!--<td class="py-2 px-4 border-b">${employee.department || '-'}</td>-->
+                        <td class="py-2 px-4 text-center border-b">
+                            <button class="view-records-btn text-white bg-turquoise hover:bg-turquoise-light px-3 py-1 rounded-md text-sm" data-id="${employee.id}" data-employee-id="${employee.employeeId}" >
+                            <!--<button class="view-records-btn text-white bg-turquoise hover:bg-turquoise-light px-3 py-1 rounded-md text-sm" data-id="${employee.id}" data-employee-id="${employee.employeeId}" data-employee-name="${employee.firstName} ${employee.lastName}">-->
                             ดูประวัติ
                           </button>
                         </td>
@@ -1914,7 +2087,7 @@
                 btn.addEventListener('click', (e) => {
                     const id = e.target.getAttribute('data-id');
                     const employeeId = e.target.getAttribute('data-employee-id');
-                    const employeeName = e.target.getAttribute('data-employee-name');
+                    //const employeeName = e.target.getAttribute('data-employee-name');
                     showLoading('กำลังดึงข้อมูลประวัติการรักษา...');
                     // Simulate API call with timeout
 
@@ -1925,8 +2098,8 @@
                                 customerDb = doc;
 
                                 document.getElementById('employeeId2').value = employeeId;
-                                document.getElementById('firstName2').value = employeeName.split(' ')[0];
-                                document.getElementById('lastName2').value = employeeName.split(' ')[1];
+                                //document.getElementById('firstName2').value = employeeName.split(' ')[0];
+                                //document.getElementById('lastName2').value = employeeName.split(' ')[1];
                                 document.getElementById('allergies2').value = customerDb.data().allergies;
                                 document.getElementById('congenitalDisease2').value = customerDb.data().congenitalDisease;
                                 //document.getElementById("resultBox").textContent =
@@ -1991,8 +2164,8 @@
                                     console.log("พบ opdCard:", doc.id, doc.data());
                                 });*/
                                 let employeeData = {};
-                                employeeData.firstName = customerDb.data().firstName;
-                                employeeData.lastName = customerDb.data().lastName;
+                                //employeeData.firstName = customerDb.data().firstName;
+                                //employeeData.lastName = customerDb.data().lastName;
                                 employeeData.employeeId = customerDb.data().employeeId;
 
                                 /*if (opdSnapshot.size == 0) {
@@ -2031,7 +2204,7 @@
             });
         }
         // Display Medical Records
-        function displayMedicalRecords(records, employeeData) {
+        async function displayMedicalRecords(records, employeeData) {
             /*if (records.length === 0) {
                 searchResults.innerHTML = `
 
@@ -2085,6 +2258,17 @@
                             </label>
                             <input type="text" id="employeeId3" name="employeeId3" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                         </div>
+						<div class="grid grid-cols-2 gap-1">
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-medium mb-1" for="birthdate3">วันเดือนปีเกิด</label>
+                                <input type="date" id="birthdate3" name="birthdate3" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-medium mb-1" for="phone3">เบอร์โทรศัพท์</label>
+                                <input type="tel" id="phone3" name="phone3" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
+                            </div>
+                        </div>
+						<!--
                         <div class="grid grid-cols-2 gap-3 mb-3">
                             <div>
                                 <label class="block text-gray-700 text-sm font-medium mb-1" for="firstName3">
@@ -2099,14 +2283,18 @@
                                 <input type="text" id="lastName3" name="lastName3" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                             </div>
                         </div>
+						-->
                     </div>
+					<!--
                     <div class="grid grid-cols-2 gap-1">
+						
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-medium mb-1" for="department3">
                                 แผนก <span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="department3" name="department3" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                         </div>
+						
                         <div class="grid grid-cols-2 gap-1">
                             <div class="mb-3">
                                 <label class="block text-gray-700 text-sm font-medium mb-1" for="birthdate3">วันเดือนปีเกิด</label>
@@ -2118,6 +2306,7 @@
                             </div>
                         </div>
                     </div>
+					-->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
                         <div class="mb-3">
                             <label class="block text-gray-700 text-sm font-medium mb-1" for="congenitalDisease3">โรคประจำตัว</label>
@@ -2197,10 +2386,11 @@
                         </div>
                   `;
             searchResults.innerHTML = html;
-            document.getElementById('employeeId3').value = customerDb.data().employeeId;
-            document.getElementById('firstName3').value = customerDb.data().firstName;
+            const decryptedValue = await decryptTextFnCached(customerDb.data().employeeId);
+            document.getElementById('employeeId3').value = decryptedValue;
+            /*document.getElementById('firstName3').value = customerDb.data().firstName;
             document.getElementById('lastName3').value = customerDb.data().lastName;
-            document.getElementById('department3').value = customerDb.data().department;
+            document.getElementById('department3').value = customerDb.data().department;*/
             document.getElementById('birthdate3').value = customerDb.data().birthdate;
             document.getElementById('phone3').value = customerDb.data().phone;
             document.getElementById('allergies3').value = customerDb.data().allergies;
@@ -2702,8 +2892,9 @@
                     const meds = data.medicines || [];
 
                     meds.forEach((med) => {
-                        const name = med.name || "ไม่ระบุ";
-                        serviceTypeCount[name] = (serviceTypeCount[name] || 0) + 1;
+                        const name = med.name + " (" + med.unit + ")" || "ไม่ระบุ";
+               
+                        serviceTypeCount[name] = (serviceTypeCount[name] || 0) + (med.quantity || 0);
                     });
                 });
 
