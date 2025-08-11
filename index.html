@@ -1940,23 +1940,28 @@
             const decryptedList = await Promise.all(
                 employees.map(emp => decryptTextFnCached(emp.employeeId))
             );
-
-            const matchedEmployees2 = employees.filter((emp, i) => {
-                const text = decryptedList[i];
-                return keywords.every(keyword => text.includes(keyword));
-            }).map((emp, i) => ({
-                id: emp.id,
-                employeeId: decryptedList[i],
-                // ใส่ฟิลด์อื่น ๆ ถ้าต้องการ
-            }));
-
-            for (const data of matchedEmployees2) {
+   
+            matchedEmployees = employees
+                .map((emp, i) => ({
+                    ...emp,
+                    decryptedEmployeeId: decryptedList[i],
+                }))
+                .filter(emp =>
+                    keywords.every(keyword => emp.decryptedEmployeeId.toLowerCase().includes(keyword))
+                )
+                .map(emp => ({
+                    id: emp.id,
+                    employeeId: emp.decryptedEmployeeId,
+                    // เพิ่มฟิลด์อื่น ๆ ตามต้องการ เช่น firstName, lastName ...
+                }));
+            /*for (const data of matchedEmployees2) {
                 const text = data.employeeId;
                 // ต้อง match ทุกคำ (AND)
+              
                 const isMatch = keywords.every(keyword =>
                     text.includes(keyword)
                 );
-
+                const isMatch = text.indexOf(searchText) > 0;
                 if (isMatch) {
                     //  results.push({ id: doc.id, ...data });
                     matchedEmployees.push({
@@ -1968,7 +1973,7 @@
                         //department: data.department
                     });
                 }
-            }
+            }*/
 
                 /*for (const doc of snapshot.docs) {
                 //snapshot.forEach(doc =>  {
