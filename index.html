@@ -3,16 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกประวัติการรักษาพยาบาล - ห้องพยาบาลการบินกรุงเทพฯ</title>
+    <title>ระบบบันทึกประวัติการรักษาพยาบาล</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00A3B8', // Turquoise
+                        secondary: '#005B8F', // Dark Blue
+                        accent: '#E6F7F9', // Light Turquoise
+                        warning: '#FFC107',
+                        danger: '#DC3545',
+                    },
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
 
@@ -49,11 +67,13 @@
             --tw-bg-opacity: 1;
             background-color: rgb(0 163 184 / var(--tw-bg-opacity, 1));
         }
+
         .btn-danger {
             color: #fff;
             background-color: #dc3545;
             border-color: #dc3545;
         }
+
         .btn-primary {
             background-color: #0A2463;
             color: white;
@@ -119,6 +139,7 @@
         .choices__placeholder {
             opacity: 1;
         }
+
         .choices__inner {
             display: inline-block;
             vertical-align: top;
@@ -130,6 +151,34 @@
             font-size: 14px;
             min-height: 44px;
             overflow: hidden;
+        }
+        .category-neuro {
+            background-color: #E0F2F1;
+            color: #00695C;
+        }
+        .category-external {
+            background-color: #F1F8E9;
+            color: #558B2F;
+        }
+        .category-eye {
+            background-color: #E1F5FE;
+            color: #0277BD;
+        }
+        .category-emergency {
+            background-color: #FFEBEE;
+            color: #C62828;
+        }
+        .bg-medAdd {
+            --tw-bg-opacity: 1;
+            background-color: rgb(33 37 124 / var(--tw-bg-opacity, 1));
+        }
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.25;
         }
         @keyframes spin {
             to {
@@ -148,19 +197,19 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                     <div>
-                        <h1 class="text-xl font-bold">ห้องพยาบาลการบินกรุงเทพฯ</h1>
+                        <h1 class="text-xl font-bold">ห้องพยาบาล</h1>
                         <button onclick="changeLocation()"><p id="location" class="text-xs text-turquoise">สำนักงานใหญ่</p></button>
                     </div>
                 </div>
                 <div class="flex items-center">
                     <div class="text-right">
                         <p id="fname" class="font-medium">
-                            เจ้าหน้าที่พยาบาล
+                            <i class="fa-solid fa-user-nurse"></i>เจ้าหน้าที่พยาบาล
                         </p>
 
                         <p class="text-xs text-turquoise">ระบบบันทึกประวัติการรักษา</p>
                     </div>
-                    <button id="logoutBtn" onclick="logout()" style="margin-left:10px" class="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded-md flex items-center">
+                    <button id="logoutBtn" onclick="logout()" style="margin-left: 10px; height: 40px;" class="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded-md flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
@@ -172,7 +221,7 @@
         <!-- Main Content -->
         <main class="flex-grow container mx-auto px-4 py-6">
             <div id="auth-section" class="fixed inset-0 bg-black bg-opacity-50  items-center flex  justify-center z-50">
-                <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+                <div class="bg-white rounded-xl p-3  mx-4">
 					<!--
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Login</h3>
                     <div class="mb-4">
@@ -188,7 +237,7 @@
                     </div>
 					-->
 					   <div class="flex space-x-4">
-                        <button onclick="googleLogin()" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">Sign in with Google</button>
+                        <button onclick="googleLogin()" class=" bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"><i class="fa-brands fa-google"></i> Sign in with Google</button>
                     </div>
                 </div>
             </div>
@@ -198,7 +247,7 @@
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
                         <select id="locationSel" name="locationSel" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
-                            <option disabled selected>-- เลือก --</option>
+                            <option disabled selected>-- Select --</option>
                         </select>
                     </div>
 
@@ -212,9 +261,10 @@
             <div id="dashboard" class="hidden">
                 <!-- Tabs -->
                 <div class="flex border-b border-gray-200 mb-6">
-                    <div class="tab active px-4 py-2 rounded-t-lg" data-tab="newRecord">ค้นหาประวัติ</div>
-                    <div class="tab px-4 py-2 rounded-t-lg" data-tab="searchRecord">การรักษา</div>
-                    <div class="tab px-4 py-2 rounded-t-lg" data-tab="reports">รายงาน</div>
+                    <div class="tab active px-4 py-2 rounded-t-lg" data-tab="newRecord"><i class="fa-solid fa-users fa-lg"></i> ค้นหาประวัติ</div>
+                    <div class="tab px-4 py-2 rounded-t-lg" data-tab="searchRecord"><i class="fa-solid fa-hand-holding-medical fa-lg"></i> การรักษา</div>
+                    <div class="tab px-4 py-2 rounded-t-lg" data-tab="reports"><i class="fa-solid fa-book-medical fa-lg"></i> รายงาน</div>
+                    <div class="tab px-4 py-2 rounded-t-lg" data-tab="medicalInventory" onclick="medicalInventory()"><i class="fa-solid fa-flask fa-lg"></i> คลังยา</div>
                 </div>
                 <!-- New Record Form -->
                 <div id="newRecord" class="tab-content ">
@@ -233,7 +283,9 @@
 
                                 </div>
                                 <button type="button" id="searchEmployeeBtn" class="mt-1 hidden text-sm text-turquoise hover:underline">เพิ่มผู้ป่วยใหม่</button>
-                                <button type="button" id="newCustomerBtn" class="mt-1  text-sm text-turquoise hover:underline">เพิ่มผู้ป่วยใหม่</button>
+                                <button type="button" id="newCustomerBtn" class="mt-1  text-sm text-primary hover:underline">เพิ่มผู้ป่วยใหม่</button>
+                                <button type="button" id="clearCacheBtn" class="mt-1  text-sm  hover:underline" style="color: chocolate"><i class="fa-solid fa-trash"></i></button>
+
 
                             </div>
                             <!--
@@ -270,7 +322,7 @@
                             <div class="grid grid-cols-2 gap-1">
                                 <div class="mb-3">
                                     <label class="block text-gray-700 text-sm font-medium mb-1" for="employeeId1">
-                                        รหัสพนักงาน <span class="text-red-500">*</span>
+                                        CN <span class="text-red-500">*</span>
                                     </label>
                                     <input type="text" id="employeeId1" name="employeeId1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                                 </div>
@@ -339,7 +391,7 @@
                             </div>
                         </div>
                         <div class="flex justify-center">
-                            <button id="saveCustomerBtn" class="btn-primary px-6 py-2 rounded-md">บันทึกข้อมูล</button>
+                            <button id="saveCustomerBtn" class="btn-primary px-6 py-2 rounded-md"><i class="fa-solid fa-notes-medical"></i> บันทึกข้อมูล</button>
                         </div>
                         <br />
                     </div>
@@ -373,9 +425,9 @@
                             <div class="mb-3"></div>
                             <div class="mb-3">
                                 <label class="block text-gray-700 text-sm font-medium mb-1" for="employeeId2 ">
-                                    รหัสพนักงาน <span class="text-red-500">*</span>
+                                    CN <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" id="employeeId2" name="employeeId2" disabled class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                                <input type="text" id="employeeId2" name="employeeId2" style="font-size:14px;" disabled class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                             </div>
                             <!--
                             <div class="grid grid-cols-2 gap-3 mb-3">
@@ -399,11 +451,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
                             <div class="mb-3">
                                 <label class="block text-gray-700 text-sm font-medium mb-1" for="congenitalDisease2">โรคประจำตัว</label>
-                                <textarea id="congenitalDisease2" name="congenitalDisease2" disabled rows="1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
+                                <textarea id="congenitalDisease2" name="congenitalDisease2" style="font-size:14px;" disabled rows="1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
                             </div>
                             <div class="mb-3">
                                 <label class="block text-gray-700 text-sm font-medium mb-1" for="allergies2">แพ้ยา/แพ้อาหาร</label>
-                                <textarea id="allergies2" name="allergies2" disabled rows="1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
+                                <textarea id="allergies2" name="allergies2" style="font-size:14px;" disabled rows="1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none text-red-500"></textarea>
                             </div>
                         </div>
 
@@ -415,101 +467,107 @@
                                 <div class="mb-3"></div>
                                 <div class="mb-3">
                                     <label class="block text-gray-700 text-sm font-medium mb-1" for="visitDate2">
-                                        วันที่รับบริการ <span class="text-red-500">*</span>
+                                        Visit Date <span class="text-red-500">*</span>
                                     </label>
-                                    <input type="datetime-local" id="visitDate2" name="visitDate2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                                    <input type="datetime-local" id="visitDate2" name="visitDate2" style="font-size:14px;" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="block text-gray-700 text-sm font-medium mb-1" for="esiTriage2">
                                         ESI Triage <span class="text-red-500">*</span>
                                     </label>
-                                    <select id="esiTriage2" name="esiTriage2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
-                                        <option value="">-- เลือก --</option>
-                                        <option value="1 - ต้องได้รับการรักษาทันที">1 - ต้องได้รับการรักษาทันที</option>
-                                        <option value="2 - ภาวะฉุกเฉินมาก">2 - ภาวะฉุกเฉินมาก</option>
-                                        <option value="3 - ภาวะฉุกเฉิน">3 - ภาวะฉุกเฉิน</option>
-                                        <option value="4 - ภาวะกึ่งฉุกเฉิน">4 - ภาวะกึ่งฉุกเฉิน</option>
-                                        <option value="5 - ภาวะไม่ฉุกเฉิน">5 - ภาวะไม่ฉุกเฉิน</option>
+                                    <select id="esiTriage2" name="esiTriage2" style="font-size:14px;" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                                        <option value="">-- Select --</option>
+                                        <option value="1 Life threatening - รักษาทันที">1 Life threatening - รักษาทันที</option>
+                                        <option value="2 Emergent - รักษาภายใน 10-15 นาที ">2 Emergent - รักษาภายใน 10-15 นาที </option>
+                                        <option value="3 Urgent - รักษาภายใน 15-30 นาที">3 Urgent - รักษาภายใน 15-30 นาที</option>
+                                        <option value="4 SemiUrgent - รักษาภายใน 30-60 นาที">4 SemiUrgent  - รักษาภายใน 30-60 นาที</option>
+                                        <option value="5 Non Urgent - รักษาภายใน 1-2 ชั่วโมง">5 Non Urgent - รักษาภายใน 1-2 ชั่วโมง</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <label class="block text-gray-700 text-sm font-medium mb-1">Vital Signs</label>
-                                <div class="grid grid-cols-5 gap-1">
+                                <div class="grid grid-cols-6 gap-2">
                                     <div>
-                                        <label class="block text-gray-700 text-xs mb-1" for="temperature2">อุณหภูมิ (°C)</label>
-                                        <input type="number" step="0.1" id="temperature2" name="temperature2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="36.5">
+                                        <label class="block text-gray-700 text-xs mb-1" for="temperature2">Temperature (°C)</label>
+                                        <input type="number" step="0.1" id="temperature2" name="temperature2" style="font-size:14px;" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="36.5">
                                     </div>
                                     <div>
-                                        <label class="block text-gray-700 text-xs mb-1" for="pulse2">ชีพจร (ครั้ง/นาที)</label>
-                                        <input type="number" id="pulse2" name="pulse2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="80">
+                                        <label class="block text-gray-700 text-xs mb-1" for="pulse2">Pulse (bpm)</label>
+                                        <input type="number" id="pulse2" name="pulse2" style="font-size:14px;" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="80">
                                     </div>
                                     <div>
-                                        <label class="block text-gray-700 text-xs mb-1" for="respiration2">การหายใจ (ครั้ง/นาที)</label>
-                                        <input type="number" id="respiration2" name="respiration2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="16">
+                                        <label class="block text-gray-700 text-xs mb-1" for="respiration2">Respiration (bpm)</label>
+                                        <input type="number" id="respiration2" name="respiration2" style="font-size:14px;" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="16">
                                     </div>
                                     <div>
-                                        <label class="block text-gray-700 text-xs mb-1" for="bloodPressure2">ความดันโลหิต (mmHg)</label>
-                                        <input type="text" id="bloodPressure2" name="bloodPressure2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="120/80">
+                                        <label class="block text-gray-700 text-xs mb-1" for="bloodPressure2">BP (mmHg)</label>
+                                        <input type="text" id="bloodPressure2" name="bloodPressure2" style="font-size:14px;" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="120/80">
                                     </div>
                                     <div>
                                         <label class="block text-gray-700 text-xs mb-1" for="oxygenSaturation2">SpO2 (%)</label>
-                                        <input type="number" id="oxygenSaturation2" name="oxygenSaturation2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="98">
+                                        <input type="number" id="oxygenSaturation2" name="oxygenSaturation2" style="font-size:14px;" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="98">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 text-xs mb-1" for="painScore2">Pain Score</label>
+                                        <input type="number" id="painScore2" name="painScore2" style="font-size:14px;" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" placeholder="0-10">
                                     </div>
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
                                 <div class="mb-3">
                                     <label class="block text-gray-700 text-sm font-medium mb-1" for="chiefComplaint2">
-                                        อาการสำคัญ <span class="text-red-500">*</span>
+                                        Chief Complaint <span class="text-red-500">*</span>
                                     </label>
-                                    <textarea id="chiefComplaint2" name="chiefComplaint2" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required></textarea>
+                                    <textarea id="chiefComplaint2" name="chiefComplaint2" style="font-size:14px;" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="physicalExamination2">การตรวจร่างกาย</label>
-                                    <textarea id="physicalExamination2" name="physicalExamination2" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
+                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="physicalExamination2">PI & PE</label>
+                                    <textarea id="physicalExamination2" name="physicalExamination2" style="font-size:14px;" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="diagnosis2">การวินิจฉัย</label>
-                                    <select id="diagnosis2" name="diagnosis2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
-                                        <option value="">-- เลือก --</option>
+                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="diagnosis2">Diagnosis</label>
+                                    <select id="diagnosis2" name="diagnosis2" style="font-size:14px;" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                                        <option value="">-- Select --</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="advice2">คำแนะนำ</label>
-                                    <textarea id="advice2" name="advice2" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
+                                    <label class="block text-gray-700 text-sm font-medium mb-1" for="advice2">Advice</label>
+                                    <textarea id="advice2" name="advice2" style="font-size:14px;" rows="2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="block text-gray-700 text-sm font-medium mb-1">การนัดติดตามอาการ</label>
-                                    <div class="flex items-center space-x-4">
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="followUp2" value="Y" class="form-radio text-turquoise">
-                                            <span class="ml-2">มี</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                            <input type="radio" name="followUp2" value="N" class="form-radio text-turquoise" checked>
-                                            <span class="ml-2">ไม่มี</span>
-                                        </label>
-                                    </div>
-                                </div>
+                                <!--
+    <div class="mb-3">
+        <label class="block text-gray-700 text-sm font-medium mb-1">การนัดติดตามอาการ</label>
+        <div class="flex items-center space-x-4">
+            <label class="inline-flex items-center">
+                <input type="radio" name="followUp2" style="font-size:14px;" value="Y" class="form-radio text-turquoise">
+                <span class="ml-2">มี</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="radio" name="followUp2" style="font-size:14px;" value="N" class="form-radio text-turquoise" checked>
+                <span class="ml-2">ไม่มี</span>
+            </label>
+        </div>
+    </div>
+    -->
                                 <div class="mb-3">
                                     <label class="block text-gray-700 text-sm font-medium mb-1" for="serviceType">
                                         ประเภทการให้บริการ <span class="text-red-500">*</span>
                                     </label>
-                                    <select id="serviceType2" name="serviceType2" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
-                                        <option value="">-- เลือก --</option>
+                                    <select id="serviceType2" name="serviceType2" style="font-size:14px;" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
+                                        <option value="">-- Select --</option>
                                         <option value="ปรึกษาพยาบาล">ปรึกษาพยาบาล</option>
                                         <option value="สั่งจ่ายยาด้วยตนเอง">สั่งจ่ายยาด้วยตนเอง</option>
                                         <option value="ใช้ห้องสังเกตอาการ">ใช้ห้องสังเกตอาการ</option>
                                         <option value="อุบัติเหตุ/ฉุกเฉิน">อุบัติเหตุ/ฉุกเฉิน</option>
                                         <option value="ส่งต่อ/แนะนำ">ส่งต่อ/แนะนำ</option>
                                         <!--
-                                        <option value="consulted">ปรึกษาพยาบาล</option>
-                                        <option value="selfMedication">สั่งจ่ายยาด้วยตนเอง</option>
-                                        <option value="observeRoom">ใช้ห้องสังเกตอาการ</option>
-                                        <option value="emergency">อุบัติเหตุ/ฉุกเฉิน</option>
-                                        <option value="refer">ส่งต่อ/แนะนำ</option>
-                                            -->
+            <option value="consulted">ปรึกษาพยาบาล</option>
+            <option value="selfMedication">สั่งจ่ายยาด้วยตนเอง</option>
+            <option value="observeRoom">ใช้ห้องสังเกตอาการ</option>
+            <option value="emergency">อุบัติเหตุ/ฉุกเฉิน</option>
+            <option value="refer">ส่งต่อ/แนะนำ</option>
+                -->
                                     </select>
                                 </div>
                             </div>
@@ -517,10 +575,10 @@
                     </div>
                     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                         <div class="p-6 border-b border-gray-200">
-                            <h2 class="text-xl font-semibold text-gray-800">📋 รายการยา</h2>
-                            <div class="mt-6 flex justify-start">
-                                <button onclick="addMedicine()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"> ➕ สั่งยา </button>
-                            </div>
+                            <button onclick="addMedicine()" class="btn-primary text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200">
+                                <i class="fa-solid fa-file-prescription fa-lg"></i> รายการยา
+                            </button>
+                            
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full">
@@ -571,8 +629,8 @@
                             <br />
                         </div>
                         <!-- Empty State -->
-                        <div id="emptyState" class="hidden bg-white rounded-xl shadow-lg p-12 text-center">
-                            <div class="text-6xl mb-4">💊</div>
+                        <div id="emptyState" class="hidden bg-white rounded-xl shadow-lg p-3 text-center">
+                            <div class="text-6xl mb-4" style="display: flex; justify-content: center; align-items: center;"> <img src="medicine.png" alt="description" style="width: 120px; opacity: 0.6;"></div>
                             <h3 class="text-xl font-semibold text-gray-800 mb-2">ยังไม่มีรายการยา</h3>
                             <p class="text-gray-600">เริ่มต้นโดยการเพิ่มยาใหม่ด้านบน</p>
                         </div>
@@ -580,8 +638,8 @@
                     <br />
                     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                         <div class="flex justify-center mt-6">
-                            <button type="submit" id="saveOpdCardBtn" class="btn-primary px-6 py-2 rounded-md">บันทึกข้อมูล</button>
-                            <button type="reset" id="clearOpdCardBtn" class="btn-secondary ml-4 px-6 py-2 rounded-md">ล้างข้อมูล</button>
+                            <button type="submit" id="saveOpdCardBtn" class="btn-primary px-6 py-2 rounded-md"><i class="fa-solid fa-notes-medical"></i> บันทึกข้อมูล</button>
+                            <button type="reset" id="clearOpdCardBtn" class="btn-secondary ml-4 px-6 py-2 rounded-md"><i class="fa-solid fa-trash-can"></i> ล้างข้อมูล</button>
                         </div>
                         <br />
                     </div>
@@ -618,7 +676,7 @@
                         </div>
                     </div>
                     <div class="flex justify-center mb-6">
-                        <button id="generateReportBtn" class="btn-primary px-6 py-2 rounded-md">สร้างรายงาน</button>
+                        <button id="generateReportBtn" class="btn-primary px-6 py-2 rounded-md"><i class="fa-solid fa-chart-line"></i> สร้างรายงาน</button>
                     </div>
                     <div id="reportResults" class="mt-4">
                         <p class="text-gray-500 text-center">กรุณาเลือกประเภทรายงานและช่วงเวลาที่ต้องการ</p>
@@ -627,12 +685,133 @@
                         <canvas id="reportChart" class="w-full h-64 hidden"></canvas>
                     </div>
                 </div>
+
+                 <!-- medical -->
+                <div id="medicalInventory" class="tab-content hidden bg-white rounded-lg shadow-lg p-6">
+ 
+                    <!-- Search and Filter -->
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div class="relative flex-grow flex">
+                                <input id="searchInput" type="text" placeholder="ค้นหาชื่อยา..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <button id="searchBtn" class="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">
+                                    ค้นหา
+                                </button>
+                            </div>
+                            <div class="flex flex-col md:flex-row gap-4">
+                                <select id="categoryFilter" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="">ทุกประเภท</option>
+                                    <option value="Analgesic / Anti-Inflamatory">Analgesic / Anti-Inflamatory</option>
+                                    <option value="Antihistamine / Decongestant">Antihistamine / Decongestant</option>
+                                    <option value="Cough Medications">Cough Medications</option>
+                                    <option value="GI Medications">GI Medications</option>
+                                    <option value="Neuro Medications">Neuro Medications</option>
+                                    <option value="Medications for External Use">Medications for External Use</option>
+                                    <option value="Eye Medications">Eye Medications</option>
+                                    <option value="Emergency Medications">Emergency Medications</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <select id="sortBy" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="name">เรียงตามชื่อ</option>
+                                    <option value="expiry">เรียงตามวันหมดอายุ</option>
+                                    <option value="stock">เรียงตามจำนวนคงเหลือ</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div id="totalMedicinesCard" class="bg-white rounded-lg shadow-md p-5 border-l-4 border-primary dashboard-card">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500 text-sm">จำนวนรายการยาทั้งหมด</p>
+                                    <h3 id="totalMedicines" class="text-2xl font-semibold">93</h3>
+                                </div>
+                                <div class="bg-accent p-3 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="expiringMedicinesCard" class="bg-white rounded-lg shadow-md p-5 border-l-4 border-warning dashboard-card">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500 text-sm">ยาใกล้หมดอายุ</p>
+                                    <h3 id="expiringMedicines" class="text-2xl font-semibold">15</h3>
+                                </div>
+                                <div class="bg-yellow-50 p-3 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="lowStockMedicinesCard" class="bg-white rounded-lg shadow-md p-5 border-l-4 border-danger dashboard-card">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500 text-sm">ยาที่ต้องเติม</p>
+                                    <h3 id="lowStockMedicines" class="text-2xl font-semibold">21</h3>
+                                </div>
+                                <div class="bg-red-50 p-3 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medicine List -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                            <h2 id="medicineListTitle" class="text-lg font-medium text-gray-800">รายการยาทั้งหมด</h2>
+                            <div class="text-sm text-gray-500" id="medicineCount">93 รายการ</div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อยา</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภท</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">คงเหลือ</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันหมดอายุ</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="medicineTableBodyInv" class="bg-white divide-y divide-gray-200">
+                                    <!-- Table rows will be dynamically generated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="emptyState" class="hidden p-8 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4M8 16l-4-4 4-4M16 16l4-4-4-4" />
+                            </svg>
+                            <h3 class="text-lg font-medium text-gray-500 mb-1">ไม่พบรายการยา</h3>
+                            <p class="text-gray-400">กรุณาเพิ่มรายการยาใหม่</p>
+                        </div>
+                        <div id="notFoundState" class="hidden p-8 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h3 class="text-lg font-medium text-gray-500 mb-1">ไม่พบยานี้ในคลัง</h3>
+                            <p class="text-gray-400">ลองค้นหาด้วยคำอื่น หรือเพิ่มรายการยาใหม่</p>
+                        </div>
+                    </div>
+                 
+                </div>
             </div>
         </main>
         <!-- Footer -->
         <footer class="bg-navy text-white py-4">
             <div class="container mx-auto px-4 text-center">
-                <p>&copy; 2023 ห้องพยาบาลการบินกรุงเทพฯ สำนักงานใหญ่</p>
+                <p>&copy; 2025 ห้องพยาบาลสำนักงานใหญ่</p>
                 <p class="text-xs text-turquoise mt-1">ระบบบันทึกประวัติการรักษาพยาบาล</p>
             </div>
         </footer>
@@ -641,7 +820,7 @@
     <div id="editModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
         <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-xl bg-white">
             <div class="mt-3">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">✏️ แก้ไขข้อมูลยา</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">✏️ เพิ่มรายการยา</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อยา</label>
@@ -684,10 +863,10 @@
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
                     <button onclick="closeEditModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-medium transition-colors duration-200">
-                        ยกเลิก
+                        <i class="fa-solid fa-trash-can"></i> ยกเลิก
                     </button>
                     <button onclick="saveEdit()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
-                        บันทึก
+                        <i class="fa-solid fa-notes-medical"></i> บันทึก
                     </button>
                 </div>
             </div>
@@ -950,7 +1129,7 @@
                 //status.textContent = "Logged in as " + user.email;
                 document.getElementById('auth-section').classList.add('hidden');
                 document.getElementById('dashboard').classList.remove('hidden');
-                let snapshot = await db.collection("staff").where("email", "==", user.email).get();
+                
                 /*snapshot.forEach((doc) => {
                       // doc.data() is never undefined for query doc snapshots
                       console.log(doc.id, " => ", doc.data());
@@ -973,14 +1152,15 @@
 					  
 				  }) .catch((error) => {
 					console.error("Error getting ID token result:", error);
-			    });;
-  
+			    });
+
+                let snapshot = await db.collection("staff").where("email", "==", user.email).get();
                 if (snapshot.docs.length > 0) {
                     userDb = snapshot.docs[0];
                     let firstDoc = snapshot.docs[0];
                     let name = firstDoc.data().name;
                     let location = firstDoc.data().location;
-                    document.getElementById("fname").innerText = name;
+                    document.getElementById("fname").innerHTML = '<i class="fa-solid fa-user-nurse"></i>' + name;
                     document.getElementById("location").innerText = location;
                     isAdmin = firstDoc.data().isAdmin;
                     if (isAdmin) {
@@ -1040,6 +1220,7 @@
         const searchEmployeeBtn = document.getElementById('searchEmployeeBtn');
         const newCustomerBtn = document.getElementById('newCustomerBtn');
         const searchBtn = document.getElementById('searchBtn');
+        const clearCacheBtn = document.getElementById('clearCacheBtn');
         const saveCustomerBtn = document.getElementById('saveCustomerBtn');
         const saveOpdCardBtn = document.getElementById('saveOpdCardBtn');
         const clearOpdCardBtn = document.getElementById('clearOpdCardBtn');
@@ -1100,7 +1281,10 @@
         });
 		
         const encryptText = functions.httpsCallable("encryptText");
-        const cache = new Map();
+        const decryptText = functions.httpsCallable('decryptText');
+
+        //cache
+        /*const cache = new Map();
 
         async function encryptTextFnCached(text) {
             if (cache.has(text)) {
@@ -1133,7 +1317,7 @@
 		  }
         }
 
-        const decryptText = functions.httpsCallable('decryptText');
+        
         const decryptCache = new Map();
 
         async function decryptTextFnCached(encrypted) {
@@ -1164,9 +1348,277 @@
 				throw error; // โยน error ต่อให้คนเรียกจัดการ
 			  }
 		
+        }*/
+
+        //IndexDb
+        /*
+        // เปิดหรือสร้าง DB
+        function openCacheDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("EncryptDecryptCache", 1);
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains("cache")) {
+                        db.createObjectStore("cache", { keyPath: "key" });
+                    }
+                };
+
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
         }
+
+        // อ่านจาก cache
+        async function getCache(key) {
+            const db = await openCacheDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("cache", "readonly");
+                const store = tx.objectStore("cache");
+                const req = store.get(key);
+
+                req.onsuccess = () => resolve(req.result ? req.result.value : null);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        // เขียนลง cache
+        async function setCache(key, value) {
+            const db = await openCacheDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("cache", "readwrite");
+                const store = tx.objectStore("cache");
+                store.put({ key, value });
+
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        // ใช้ cache กับ encrypt
+        async function encryptTextFnCached(text) {
+            const cacheKey = `enc_${text}`;
+            const cached = await getCache(cacheKey);
+            if (cached) {
+                console.log("ใช้ค่าจาก IndexedDB cache:", cached);
+                return cached;
+            }
+
+            const result = await encryptText({ text }); // functions.httpsCallable
+            const encrypted = result.data.encrypted;
+            await setCache(cacheKey, encrypted);
+            return encrypted;
+        }
+
+        // ใช้ cache กับ decrypt
+        async function decryptTextFnCached(encrypted) {
+            const cacheKey = `dec_${encrypted}`;
+            const cached = await getCache(cacheKey);
+            if (cached) {
+                console.log("ใช้ค่าจาก IndexedDB cache:", cached);
+                return cached;
+            }
+
+            const result = await decryptText({ encrypted });
+            const decrypted = result.data.decrypted;
+            await setCache(cacheKey, decrypted);
+            return decrypted;
+        }*/
 			
-	
+        // ==== IndexedDB Helper 7 day ====
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("myCacheDB", 1);
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains("cache")) {
+                        const store = db.createObjectStore("cache", { keyPath: "key" });
+                        store.createIndex("key", "key", { unique: true });
+                    }
+                };
+
+                request.onsuccess = async (event) => {
+                    const db = event.target.result;
+                    await clearExpiredCache(db); // ล้างของเก่าอัตโนมัติ
+                    resolve(db);
+                };
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+
+        // Save with timestamp
+        async function setCache(key, value) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("cache", "readwrite");
+                const store = tx.objectStore("cache");
+                store.put({ key, value, timestamp: Date.now() });
+                tx.oncomplete = () => resolve();
+                tx.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        // Get and check expiration
+        async function getCache(key, maxAgeMs = 7 * 24 * 60 * 60 * 1000) { // default 7 days
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("cache", "readonly");
+                const store = tx.objectStore("cache");
+                const request = store.get(key);
+
+                request.onsuccess = () => {
+                    const item = request.result;
+                    if (!item) return resolve(null);
+
+                    if (Date.now() - item.timestamp > maxAgeMs) {
+                        db.transaction("cache", "readwrite").objectStore("cache").delete(key);
+                        return resolve(null);
+                    }
+                    resolve(item.value);
+                };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        // Clear expired items
+        async function clearExpiredCache(db, maxAgeMs = 7 * 24 * 60 * 60 * 1000) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("cache", "readwrite");
+                const store = tx.objectStore("cache");
+                const request = store.openCursor();
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        const item = cursor.value;
+                        if (Date.now() - item.timestamp > maxAgeMs) {
+                            cursor.delete();
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve();
+                    }
+                };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        // ==== Usage ====
+        async function encryptTextFnCached(text) {
+            const cacheKey = `enc_${text}`;
+            const cached = await getCache(cacheKey);
+            if (cached) return cached;
+            console.log('encryptText DB')
+            const result = await encryptText({ text }); // functions.httpsCallable
+            const encrypted = result.data.encrypted;
+            await setCache(cacheKey, encrypted);
+            return encrypted;
+        }
+
+        async function decryptTextFnCached(encrypted) {
+            const cacheKey = `dec_${encrypted}`;
+            const cached = await getCache(cacheKey);
+            if (cached) return cached;
+            console.log('decryptText DB')
+            const result = await decryptText({ encrypted });
+            const decrypted = result.data.decrypted;
+            await setCache(cacheKey, decrypted);
+            return decrypted;
+        }
+
+        // เปิด DB
+        function openDBEmp() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("MyAppDB", 1);
+                request.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("employees")) {
+                        db.createObjectStore("employees", { keyPath: "id" }); // ใช้ id เป็น key
+                    }
+                };
+
+                request.onsuccess = async (event) => {
+                    const db = event.target.result;
+                    await clearExpiredCacheEmp(db); // ล้างของเก่าอัตโนมัติ
+                    resolve(db);
+                };
+                request.onerror = e => reject(e.target.error);
+            });
+        }
+
+        // Clear expired items
+        async function clearExpiredCacheEmp(db, maxAgeMs = 1 * 24 * 60 * 60 * 1000) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("employees", "readwrite");
+                const store = tx.objectStore("employees");
+                const request = store.openCursor();
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        const item = cursor.value;
+                        if (Date.now() - item.timestamp > maxAgeMs) {
+                            cursor.delete();
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve();
+                    }
+                };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        // บันทึก employees array (แต่ละ object ต้องมี unique id)
+        async function saveEmployees(employees) {
+            const db = await openDBEmp();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("employees", "readwrite");
+                const store = tx.objectStore("employees");
+                employees.forEach(emp => store.put(emp));
+                tx.oncomplete = () => resolve();
+                tx.onerror = e => reject(e.target.error);
+            });
+        }
+
+        // โหลด employees ทั้งหมดจาก IndexedDB
+        async function loadEmployees(maxAgeMs = 1 * 24 * 60 * 60 * 1000) {
+            const db = await openDBEmp();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("employees", "readonly");
+                const store = tx.objectStore("employees");
+                const request = store.getAll();
+                request.onsuccess = () => {
+                    const item = request.result;
+                    if (!item) return resolve(null);
+
+                    if (Date.now() - item.timestamp > maxAgeMs) {
+                        db.transaction("employees", "readwrite").objectStore("employees").delete(key);
+                        return resolve(null);
+                    }
+                    resolve(request.result);
+                };
+                request.onerror = e => reject(e.target.error);
+            });
+        }
+
+        async function getEmployeesCached() {
+            let employees = await loadEmployees();
+            //console.log(employees)
+            if (!employees || employees.length === 0) {
+                console.log('loadEmployees DB')
+                // ถ้าไม่มีข้อมูลใน IndexedDB ให้โหลดจาก Firestore
+                const snapshot = await db.collection("employees").get();
+                employees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), timestamp: Date.now() }));
+
+                // บันทึกลง IndexedDB
+                await saveEmployees(employees);
+            }
+
+            return employees;
+        }
+
         function back2SearchBtn3() {
             //document.getElementById('searchResults').classList.add('hidden');
             displayEmployeeSearchResults(matchedEmployees);
@@ -1205,7 +1657,7 @@
                         updateDate: firebase.firestore.FieldValue.serverTimestamp(),
                         createdBy: userDb.data().name
                     })
-                        .then((docRef) => {
+                        .then(async (docRef) => {
                             //docRef.id
                             db.collection("employees").doc(customerDb.id).get()
                                 .then((doc) => {
@@ -1223,8 +1675,34 @@
                             document.getElementById('congenitalDisease2').value = congenitalDisease;
                             document.getElementById('allergies2').value = allergies;
 
+                            const ta = document.getElementById('allergies2');
+                            if (allergies.toLowerCase() === 'none' || allergies === 'ไม่มี' || allergies === '-') {
+                                ta.classList.remove('text-red-500');
+                                ta.classList.add('text-green-500');
+                            } else {
+                                ta.classList.remove('text-green-500');
+                                ta.classList.add('text-red-500');
+                            }
+
+                            /////
+                            let employees = []
+                            let employee = {};
+                            employee.id = customerDb.id;
+                            employee.employeeId = encryptedValue;
+                            employee.department = department;
+                            employee.birthdate = birthdate;
+                            employee.phone = phone;
+                            employee.congenitalDisease = congenitalDisease;
+                            employee.allergies = allergies;
+                            employee.timestamp = Date.now() ;
+                            employees.push(employee);
+                            await saveEmployees(employees);
+                            
+                            /////
+
                         })
                         .catch((error) => {
+                            console.log(error);
                             showNotification('error', 'เกิดข้อผิดพลาด', 'เกิดข้อผิดพลาด');
                         });
                     hideLoading();
@@ -1264,7 +1742,7 @@
                         createdDate: firebase.firestore.FieldValue.serverTimestamp(),
                         createdBy: userDb.data().name
                     })
-                        .then((docRef) => {
+                        .then(async (docRef) => {
                             //docRef.id
                             customerDb = docRef;
                             showNotification('success', 'สำเร็จ', 'บันทึกข้อมูลสำเร็จ');
@@ -1283,8 +1761,37 @@
                             document.getElementById('phone1').value = '';
                             document.getElementById('congenitalDisease1').value = '';
                             document.getElementById('allergies1').value = '';
+          
+                            const ta = document.getElementById('allergies2');
+                            if (allergies.toLowerCase() === 'none' || allergies === 'ไม่มี' || allergies === '-') {
+                                ta.classList.remove('text-red-500');
+                                ta.classList.add('text-green-500');
+                            } else {
+                                ta.classList.remove('text-green-500');
+                                ta.classList.add('text-red-500');
+                            }
+
+                            /////
+                            let employees = []
+                            let employee = {};
+                            employee.id = customerDb.id;
+                            employee.employeeId = encryptedValue;
+                            employee.department = department;
+                            employee.birthdate = birthdate;
+                            employee.phone = phone;
+                            employee.congenitalDisease = congenitalDisease;
+                            employee.allergies = allergies;
+                            employee.timestamp = Date.now();
+                            //employees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            employees.push(employee);
+        
+                            await saveEmployees(employees);
+
+                            /////
+
                         })
                         .catch((error) => {
+                            console.log(error);
                             showNotification('error', 'เกิดข้อผิดพลาด', 'เกิดข้อผิดพลาด');
                         });
                     hideLoading();
@@ -1366,7 +1873,7 @@
         searchEmployeeBtn.addEventListener('click', () => {
             const employeeId = document.getElementById('employeeId').value;
             if (!employeeId) {
-                showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกรหัสพนักงาน');
+                showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกCN');
                 return;
             }
             showLoading('กำลังค้นหาข้อมูลพนักงาน...');
@@ -1402,12 +1909,13 @@
             const respiration = document.getElementById('respiration2').value;
             const bloodPressure = document.getElementById('bloodPressure2').value;
             const oxygenSaturation = document.getElementById('oxygenSaturation2').value;
+            const painScore = document.getElementById('painScore2').value;
             const chiefComplaint = document.getElementById('chiefComplaint2').value;
             const physicalExamination = document.getElementById('physicalExamination2').value;
             const diagnosis = document.getElementById('diagnosis2').value;
             const advice = document.getElementById('advice2').value;
             const serviceType = document.getElementById('serviceType2').value;
-            const followUp = document.querySelector('input[name="followUp2"]:checked').value;
+            //const followUp = document.querySelector('input[name="followUp2"]:checked').value;
             //console.log(followUpValue); // ได้ "Y" หรือ "N"
          
             if (!employeeId /*|| !firstName || !lastName*/ || !visitDate || !esiTriage || !serviceType2) {
@@ -1425,13 +1933,14 @@
                         respiration: respiration,
                         bloodPressure: bloodPressure,
                         oxygenSaturation: oxygenSaturation,
+                        painScore: painScore,
                         chiefComplaint: chiefComplaint,
                         physicalExamination: physicalExamination,
                         diagnosis: diagnosis,
                         pulse: pulse,
                         advice: advice,
                         serviceType: serviceType,
-                        followUp: followUp,
+                        //followUp: followUp,
                         medicines: medicines,
                         location: userDb.data().location,
                         createdDate: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1488,7 +1997,7 @@
 
             // สร้าง option แรกที่เป็น "-- เลือก --"
             const defaultOption = document.createElement("option");
-            defaultOption.textContent = "-- เลือก --";
+            defaultOption.textContent = "-- Select --";
             defaultOption.value = '';        // หรือ "none"
             //defaultOption.disabled = true;
             defaultOption.selected = true;
@@ -1524,13 +2033,13 @@
             typeSelect.innerHTML = "";
             nameSelect.innerHTML = "";
             const defaultOption = document.createElement("option");
-            defaultOption.textContent = "-- เลือก --";
+            defaultOption.textContent = "-- Select --";
             defaultOption.value = '';        // หรือ "none"
             //defaultOption.disabled = true;
             defaultOption.selected = true;
 
             const defaultOption2 = document.createElement("option");
-            defaultOption2.textContent = "-- เลือก --";
+            defaultOption2.textContent = "-- Select --";
             defaultOption2.value = '';        // หรือ "none"
             //defaultOption.disabled = true;
             defaultOption2.selected = true;
@@ -1564,7 +2073,7 @@
                 });*/
 
                 //nameChoices.clearChoices();
-                const defaultChoice = { value: '', label: '-- เลือก --', disabled: true, selected: true };
+                const defaultChoice = { value: '', label: '-- Select --', disabled: true, selected: true };
                 nameChoices.setChoices(
                     [defaultChoice,
                         ...uniqueNames.map(n => ({ value: n, label: n }))],
@@ -1606,7 +2115,7 @@
         // ✅ 3. เมื่อเลือก type → กรอง name
         typeSelect.addEventListener("change", () => {
             //nameSelect.innerHTML = '<option>-- เลือก --</option>';
-            unitSelect.innerHTML = '<option>-- เลือก --</option>';
+            unitSelect.innerHTML = '<option>-- Select --</option>';
             //unitSelect.disabled = true;
 
             const selectedType = typeSelect.value;
@@ -1615,7 +2124,7 @@
 
             nameChoices.removeActiveItems();
             nameChoices.clearChoices();
-            const defaultChoice = { value: '', label: '-- เลือก --', disabled: true, selected: true };
+            const defaultChoice = { value: '', label: '-- Select --', disabled: true, selected: true };
             if (uniqueNames2.length == 0) {
                 uniqueNames.sort((a, b) => a.localeCompare(b));
                 /*uniqueNames.forEach(name => {
@@ -1647,7 +2156,7 @@
 
         // ✅ 4. เมื่อเลือก name → แสดง unit
         nameSelect.addEventListener("change", () => {
-            unitSelect.innerHTML = '<option>-- เลือก Unit --</option>';
+            unitSelect.innerHTML = '<option>-- Select Unit --</option>';
             //unitSelect.disabled = false;
 
             //const selectedType = typeSelect.value;
@@ -1677,7 +2186,8 @@
 				//alert("ยินดีต้อนรับ " + user.displayName);
 			  })
 			  .catch(function(error) {
-				console.error(error);
+                  console.error(error);
+                  showNotification('error', 'ข้อผิดพลาด', 'คุณไม่ได้รับสิทธิ์การเข้าถึง');
 			  });
 		}
         function login() {
@@ -1726,7 +2236,7 @@
 
                 // สร้าง option แรกที่เป็น "-- เลือก --"
                 const defaultOption = document.createElement("option");
-                defaultOption.textContent = "-- เลือก --";
+                defaultOption.textContent = "-- Select --";
                 defaultOption.value = '';        // หรือ "none"
                 defaultOption.disabled = true;
                 defaultOption.selected = true;
@@ -1800,12 +2310,13 @@
             const respiration = document.getElementById('respiration').value;
             const bloodPressure = document.getElementById('bloodPressure').value;
             const oxygenSaturation = document.getElementById('oxygenSaturation').value;
+            const painScore = document.getElementById('painScore').value;
             const chiefComplaint = document.getElementById('chiefComplaint').value;
             const physicalExamination = document.getElementById('physicalExamination').value;
             const diagnosis = document.getElementById('diagnosis').value;
             const treatment = document.getElementById('treatment').value;
             const advice = document.getElementById('advice').value;
-            const followUp = document.querySelector('input[name="followUp"]:checked').value;
+            //const followUp = document.querySelector('input[name="followUp"]:checked').value;
             const serviceType = document.getElementById('serviceType').value;
             // Validate required fields
             if (!employeeId || /*!firstName || !lastName || !department ||*/ !visitDate || !esiTriage || !chiefComplaint || !serviceType) {
@@ -1839,14 +2350,15 @@
                         pulse,
                         respiration,
                         bloodPressure,
-                        oxygenSaturation
+                        oxygenSaturation,
+                        painScore
                     },
                     chiefComplaint,
                     physicalExamination,
                     diagnosis,
                     treatment,
                     advice,
-                    followUp,
+                    //followUp,
                     serviceType,
                     createdAt: new Date().toISOString(),
                     createdBy: "เจ้าหน้าที่พยาบาล"
@@ -1862,13 +2374,8 @@
                 document.getElementById('visitDate').value = `${year}-${month}-${day}T${hours}:${minutes}`;
             }, 1200);
         });
-        // Search Records
-        searchBtn.addEventListener('click', () => {
-            /*const searchValue = searchInput.value.trim();
-            if (!searchValue) {
-                showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกข้อมูลที่ต้องการค้นหา');
-                return;
-            }*/
+
+        function searchUser(){
             document.getElementById('customer-result').classList.remove('hidden');
             document.getElementById('customer-insert').classList.add('hidden');
             const searchValue = searchInput.value.trim();
@@ -1889,6 +2396,33 @@
                 }*/
                 hideLoading();
             }, 800);
+        }
+        searchInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // กัน submit form หรือ refresh หน้า
+                searchUser();
+            }
+        });
+
+        clearCacheBtn.addEventListener('click', async () => {
+            if (confirm('คุณต้องการ clear cache หรือไม่?')) {
+                const db = await openDBEmp();
+                const tx = db.transaction("employees", "readwrite");
+                const store = tx.objectStore("employees");
+
+                store.clear(); // ล้างทุก record
+
+                searchUser();
+            }
+        });
+        // Search Records
+        searchBtn.addEventListener('click', () => {
+            /*const searchValue = searchInput.value.trim();
+            if (!searchValue) {
+                showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกข้อมูลที่ต้องการค้นหา');
+                return;
+            }*/
+            searchUser();
         });
         // Search Records by Employee ID
         function searchRecordsByEmployeeId(employeeId, employeeData) {
@@ -1939,11 +2473,13 @@
             const searchText = name;
             const keywords = searchText.trim().toLowerCase().split(/\s+/); // ['aa', 'bb', 'cc']
 
-            const snapshot = await db.collection("employees").get();
+            /*const snapshot = await db.collection("employees").get();
             //db.collection("employees").get().then(snapshot => {
             //const matchedEmployees = [];
             
-            const employees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const employees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));*/
+            
+            const employees = await getEmployeesCached();
 
             const decryptedList = await Promise.all(
                 employees.map(emp => decryptTextFnCached(emp.employeeId))
@@ -2057,7 +2593,7 @@
                     <table class="min-w-full bg-white">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสพนักงาน</th>
+                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CN</th>
                                 <!--<th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>-->
                                 <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แผนก</th>
                                 <th class="py-2 px-4 border-b text-center text-xs font-medium text-gray-500 uppercase tracking-wider">การดำเนินการ</th>
@@ -2078,11 +2614,13 @@
                     <tr>
                         <td class="py-2 px-4 border-b">${employee.employeeId}</td>
                         <!--<td class="py-2 px-4 border-b">${employee.firstName} ${employee.lastName}</td>-->
-                        <td class="py-2 px-4 border-b">${employee.department || '-'}</td>
+                        <td class="py-2 px-4 border-b">
+                           <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getDepColor(employee.department || '-')}">${employee.department || '-'}</span>
+                        </td>
                         <td class="py-2 px-4 text-center border-b">
-                            <button class="view-records-btn text-white bg-turquoise hover:bg-turquoise-light px-3 py-1 rounded-md text-sm" data-id="${employee.id}" data-employee-id="${employee.employeeId}" >
+                            <button class="view-records-btn text-white bg-primary hover:bg-primary/90 px-3 py-1 rounded-md text-sm" data-id="${employee.id}" data-employee-id="${employee.employeeId}" >
                             <!--<button class="view-records-btn text-white bg-turquoise hover:bg-turquoise-light px-3 py-1 rounded-md text-sm" data-id="${employee.id}" data-employee-id="${employee.employeeId}" data-employee-name="${employee.firstName} ${employee.lastName}">-->
-                            ดูประวัติ
+                            <i class="fa-solid fa-user"></i> ดูประวัติ
                           </button>
                         </td>
                     </tr>
@@ -2118,6 +2656,16 @@
                                 document.getElementById('congenitalDisease2').value = customerDb.data().congenitalDisease;
                                 //document.getElementById("resultBox").textContent =
                                 //    JSON.stringify(doc.data(), null, 2);
+                                
+                                let allergies = customerDb.data().allergies;
+                                const ta = document.getElementById('allergies2');
+                                if (allergies.toLowerCase() === 'none' || allergies === 'ไม่มี' || allergies === '-') {
+                                    ta.classList.remove('text-red-500');
+                                    ta.classList.add('text-green-500');
+                                } else {
+                                    ta.classList.remove('text-green-500');
+                                    ta.classList.add('text-red-500');
+                                }
                             } else {
                                 //document.getElementById("resultBox").textContent =
                                 //    "ไม่พบเอกสารนี้ใน Firestore";
@@ -2194,6 +2742,7 @@
                             })
                             .catch(error => {
                                 console.error("เกิดข้อผิดพลาด:", error);
+
                             });
 
                         /*const employeeMedicalRecords = sampleData.employeeMedicalRecords[employeeId];
@@ -2269,7 +2818,7 @@
                         <div class="grid grid-cols-2 gap-1">
                         <div class="mb-3">
                             <label class="block text-gray-700 text-sm font-medium mb-1" for="employeeId3">
-                                รหัสพนักงาน <span class="text-red-500">*</span>
+                                CN <span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="employeeId3" name="employeeId3" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none" required>
                         </div>
@@ -2336,12 +2885,12 @@
                         </div>
                         <div class="mb-3">
                             <label class="block text-gray-700 text-sm font-medium mb-1" for="allergies3">แพ้ยา/แพ้อาหาร</label>
-                            <textarea id="allergies3" name="allergies3" rows="1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none"></textarea>
+                            <textarea id="allergies3" name="allergies3" rows="1" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none text-red-500"></textarea>
                         </div>
                     </div>
                     <div class="flex justify-center">
-                        <button id="saveCustomerBtn3" onClick="saveCustomerBtn3()"  class="btn-primary px-6 py-2 rounded-md">บันทึกข้อมูล</button>
-                        <button id="back2SearchBtn3" onClick="back2SearchBtn3()"  class="btn-danger ml-4 px-6 py-2 rounded-md">ย้อนกลับ</button>
+                        <button id="saveCustomerBtn3" onClick="saveCustomerBtn3()"  class="btn-primary px-6 py-2 rounded-md"><i class="fa-solid fa-notes-medical"></i> บันทึกข้อมูล</button>
+                        <button id="back2SearchBtn3" onClick="back2SearchBtn3()"  class="btn-danger ml-4 px-6 py-2 rounded-md"><i class="fa-solid fa-clock-rotate-left"></i> ย้อนกลับ</button>
                     </div>
 
                         </div>
@@ -2349,10 +2898,10 @@
                             <table class="min-w-full bg-white">
                                 <thead class="bg-gray-100">
                                     <tr>
-                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่รับบริการ</th>
-                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อาการสำคัญ</th>
-                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การวินิจฉัย</th>
-                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การดำเนินการ</th>
+                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visit Date</th>
+                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chief Complaint</th>
+                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Diagnosis</th>
+                                        <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="min-width: 150px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2390,12 +2939,12 @@
                 html += `
 
                         <tr>
-                            <td class="py-2 px-4 border-b">${visitDate}</td>
-                            <td class="py-2 px-4 border-b">${record.data().chiefComplaint}</td>
-                            <td class="py-2 px-4 border-b">${record.data().diagnosis}</td>
-                            <td class="py-2 px-4 border-b">
+                            <td class="py-2 px-4 border-b" style="font-size:14px;">${visitDate}</td>
+                            <td class="py-2 px-4 border-b" style="font-size:14px;">${record.data().chiefComplaint}</td>
+                            <td class="py-2 px-4 border-b" style="font-size:14px;">${record.data().diagnosis}</td>
+                            <td class="py-2 px-4 border-b" >
                                 <button class="view-record-detail-btn text-white bg-navy hover:bg-blue-800 px-3 py-1 rounded-md text-sm" data-record-id="${record.id}">
-                            รายละเอียด
+                            <i class="fa-solid fa-note-sticky"></i> รายละเอียด
                           </button>
                             </td>
                         </tr>
@@ -2417,6 +2966,16 @@
             document.getElementById('phone3').value = customerDb.data().phone;
             document.getElementById('allergies3').value = customerDb.data().allergies;
             document.getElementById('congenitalDisease3').value = customerDb.data().congenitalDisease;
+
+            let allergies = customerDb.data().allergies
+            const ta = document.getElementById('allergies3');
+            if (allergies.toLowerCase() === 'none' || allergies === 'ไม่มี' || allergies === '-') {
+                ta.classList.remove('text-red-500');
+                ta.classList.add('text-green-500');
+            } else {
+                ta.classList.remove('text-green-500');
+                ta.classList.add('text-red-500');
+            }
 
             recordDetail.classList.add('hidden');
             // Add event listeners to view record detail buttons
@@ -2467,7 +3026,7 @@
                     serviceTypeText = record.serviceType;
             }*/
             serviceTypeText = record.data().serviceType;
-            let followUpText = record.data().followUp === 'Y' ? 'มี' : 'ไม่มี';
+            //let followUpText = record.data().followUp === 'Y' ? 'มี' : 'ไม่มี';
             const createdDate = record.data().createdDate.toDate();
             createdDate.setHours(createdDate.getHours() + 7);
             let meds = '<p class="mt-1 bg-white p-2 rounded border">-</p>';
@@ -2488,9 +3047,9 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <h4 class="font-medium text-navy mb-3">ข้อมูลการรับบริการ</h4>
-                                    <div class="space-y-2">
+                                    <div class="space-y-2" style="font-size: 14px;">
                                         <div class="flex">
-                                            <span class="font-medium w-32">วันที่รับบริการ:</span>
+                                            <span class="font-medium w-32">Visit Date:</span>
                                             <span>${visitDate}</span>
                                         </div>
                                         <div class="flex">
@@ -2505,32 +3064,38 @@
                                             <span class="font-medium w-32">ประเภทบริการ:</span>
                                             <span>${serviceTypeText}</span>
                                         </div>
+                                        <!--
                                         <div class="flex">
                                             <span class="font-medium w-32">การนัดติดตาม:</span>
-                                            <span>${followUpText}</span>
+                                            <span>followUpText</span>
                                         </div>
+                                        -->
                                     </div>
                                     <h4 class="font-medium text-navy mt-6 mb-3">Vital Signs</h4>
-                                    <div class="grid grid-cols-2 gap-2">
+                                    <div class="grid grid-cols-2 gap-2" style="font-size: 14px;">
                                         <div class="flex">
-                                            <span class="font-medium w-32">อุณหภูมิ:</span>
+                                            <span class="font-medium w-32">Temperature:</span>
                                             <span>${record.data().temperature || '-'} °C</span>
                                         </div>
                                         <div class="flex">
-                                            <span class="font-medium w-32">ชีพจร:</span>
-                                            <span>${record.data().pulse || '-'} ครั้ง/นาที</span>
+                                            <span class="font-medium w-32">Pulse:</span>
+                                            <span>${record.data().pulse || '-'} bpm</span>
                                         </div>
                                         <div class="flex">
-                                            <span class="font-medium w-32">การหายใจ:</span>
-                                            <span>${record.data().respiration || '-'} ครั้ง/นาที</span>
+                                            <span class="font-medium w-32">Respiration:</span>
+                                            <span>${record.data().respiration || '-'} bpm</span>
                                         </div>
                                         <div class="flex">
-                                            <span class="font-medium w-32">ความดันโลหิต:</span>
+                                            <span class="font-medium w-32">BP:</span>
                                             <span>${record.data().bloodPressure || '-'} mmHg</span>
                                         </div>
                                         <div class="flex">
                                             <span class="font-medium w-32">SpO2:</span>
                                             <span>${record.data().oxygenSaturation || '-'} %</span>
+                                        </div>
+                                        <div class="flex">
+                                            <span class="font-medium w-32">Pain Score:</span>
+                                            <span>${record.data().painScore || '-'} </span>
                                         </div>
                                     </div>
                                 </div>
@@ -2538,24 +3103,24 @@
                                     <h4 class="font-medium text-navy mb-3">ข้อมูลการรักษา</h4>
                                     <div class="space-y-4">
                                         <div>
-                                            <p class="font-medium text-navy">อาการสำคัญ</p>
-                                            <p class="mt-1 bg-white p-2 rounded border">${record.data().chiefComplaint || '-'}</p>
+                                            <p class="font-medium text-navy">Chief Complaint</p>
+                                            <p class="mt-1 bg-white p-2 rounded border" style="font-size: 14px;">${record.data().chiefComplaint || '-'}</p>
                                         </div>
                                         <div>
-                                            <p class="font-medium text-navy">การตรวจร่างกาย</p>
-                                            <p class="mt-1 bg-white p-2 rounded border">${record.data().physicalExamination || '-'}</p>
+                                            <p class="font-medium text-navy">PI & PE</p>
+                                            <p class="mt-1 bg-white p-2 rounded border" style="font-size: 14px;">${record.data().physicalExamination || '-'}</p>
                                         </div>
                                         <div>
-                                            <p class="font-medium text-navy">การวินิจฉัย</p>
-                                            <p class="mt-1 bg-white p-2 rounded border">${record.data().diagnosis || '-'}</p>
+                                            <p class="font-medium text-navy">Diagnosis</p>
+                                            <p class="mt-1 bg-white p-2 rounded border" style="font-size: 14px;">${record.data().diagnosis || '-'}</p>
                                         </div>
-                                        <div>
-                                            <p class="font-medium text-navy">การรักษา/ยาที่ให้</p>
+                                        <div style="font-size: 14px;">
+                                            <p class="font-medium text-navy" style="font-size: 16px;">Treatment</p>
                                            ${meds}
                                         </div>
                                         <div>
-                                            <p class="font-medium text-navy">คำแนะนำ</p>
-                                            <p class="mt-1 bg-white p-2 rounded border">${record.data().advice || '-'}</p>
+                                            <p class="font-medium text-navy">Advice</p>
+                                            <p class="mt-1 bg-white p-2 rounded border" style="font-size: 14px;">${record.data().advice || '-'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2602,11 +3167,34 @@
         ];
         function getTypeColor(type) {
             const colors = {
-                'ยาแก้ปวด': 'bg-blue-100 text-blue-800',
-                'ยาแก้ไข้': 'bg-green-100 text-green-800',
+                'Analgesic / Anti-Inflamatory': 'bg-blue-100 text-blue-800',
+                'Antihistamine / Decongestant': 'bg-purple-100 text-purple-800',
+                'Cough Medications': 'bg-green-100 text-green-800',
+                'GI Medications': 'bg-orange-100 text-orange-800',
+                'Neuro Medications': 'category-neuro',
+                'Medications for External Use': 'category-external',
+                'Eye Medications': 'category-eye',
+                'Emergency Medications': 'category-emergency',
                 'ยาปฏิชีวนะ': 'bg-red-100 text-red-800',
                 'ยาแก้แพ้': 'bg-yellow-100 text-yellow-800',
-                'ยาวิตามิน': 'bg-purple-100 text-purple-800',
+                
+                'อื่นๆ': 'bg-gray-100 text-gray-800'
+            };
+            return colors[type] || 'bg-gray-100 text-gray-800';
+        }
+        function getDepColor(type) {
+            const colors = {
+                'P': 'bg-blue-100 text-blue-800',
+                'Antihistamine / Decongestant': 'bg-purple-100 text-purple-800',
+                'Cough Medications': 'bg-green-100 text-green-800',
+                'N': 'bg-orange-100 text-orange-800',
+                'Neuro Medications': 'category-neuro',
+                'Medications for External Use': 'category-external',
+                'Eye Medications': 'category-eye',
+                'Emergency Medications': 'category-emergency',
+                'ยาปฏิชีวนะ': 'bg-red-100 text-red-800',
+                'ยาแก้แพ้': 'bg-yellow-100 text-yellow-800',
+
                 'อื่นๆ': 'bg-gray-100 text-gray-800'
             };
             return colors[type] || 'bg-gray-100 text-gray-800';
@@ -2674,12 +3262,12 @@
             nameChoices.removeActiveItems();
             nameChoices.clearChoices();
 
-            unitSelect.innerHTML = '<option>-- เลือก --</option>';
+            unitSelect.innerHTML = '<option>-- Select --</option>';
 
             typeSelect.innerHTML = "";
             nameSelect.innerHTML = "";
             const defaultOption = document.createElement("option");
-            defaultOption.textContent = "-- เลือก --";
+            defaultOption.textContent = "-- Select --";
             defaultOption.value = '';        // หรือ "none"
             //defaultOption.disabled = true;
             defaultOption.selected = true;
@@ -2697,7 +3285,7 @@
                 unitSelect.appendChild(opt);
             });
 
-            const defaultChoice = { value: '', label: '-- เลือก --', disabled: true, selected: true };
+            const defaultChoice = { value: '', label: '-- Select --', disabled: true, selected: true };
             nameChoices.setChoices(
                 [defaultChoice,
                 ...uniqueNames.map(n => ({ value: n, label: n }))],
@@ -2777,7 +3365,7 @@
             }
             showLoading('กำลังสร้างรายงาน...');
             // Simulate API call with timeout
-            setTimeout(() => {
+            setTimeout(async () => {
                 // Convert dates to timestamp for comparison
                 const startTimestamp = new Date(startDate).getTime();
                 const endTimestamp = new Date(endDate + 'T23:59:59').getTime();
@@ -2796,17 +3384,17 @@
                         break;
                     case 'serviceType':
                         //generateServiceTypeReport(filteredRecords, startDate, endDate);
-                        generateServiceTypeReport(startDate, endDate + 'T23:59:59', location);
+                        await generateServiceTypeReport(startDate, endDate + 'T23:59:59', location);
                         break;
                     case 'department':
                         //generateDepartmentReport(filteredRecords, startDate, endDate);
-                        generateDiagnosisReport(startDate, endDate + 'T23:59:59', location, 'department');
+                        await generateDiagnosisReport(startDate, endDate + 'T23:59:59', location, 'department');
                         break;
                     case 'diagnosis':
-                        generateDiagnosisReport(startDate, endDate + 'T23:59:59', location, 'diagnosis');
+                        await generateDiagnosisReport(startDate, endDate + 'T23:59:59', location, 'diagnosis');
                         break;
                     case 'medicine':
-                        generateDiagnosisReport(startDate, endDate + 'T23:59:59', location, 'medicine');
+                        await generateDiagnosisReport(startDate, endDate + 'T23:59:59', location, 'medicine');
                         break;
                 }
                 hideLoading();
@@ -3242,7 +3830,7 @@
                   `;
             reportResults.innerHTML = html;
             // Create chart
-            createChart('pie', h3, chartLabels, chartData, chartColors);
+            //createChart('pie', h3, chartLabels, chartData, chartColors);
         }
         // Generate Service Type Report
         //function generateServiceTypeReport(records, startDate, endDate) {
@@ -3338,7 +3926,7 @@
                   `;
             reportResults.innerHTML = html;
             // Create chart
-            createChart('pie', 'สัดส่วนประเภทการให้บริการ', chartLabels, chartData, chartColors);
+            //createChart('pie', 'สัดส่วนประเภทการให้บริการ', chartLabels, chartData, chartColors);
         }
         // Generate Department Report
         function generateDepartmentReport(records, startDate, endDate) {
@@ -3534,6 +4122,937 @@
         function hideLoading() {
             loadingOverlay.classList.add('hidden');
         }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = new Intl.DateTimeFormat('th-TH', { month: 'short' }).format(date);
+            const year = date.getFullYear() + 543; // Convert to Buddhist Era
+            return `${day} ${month} ${year}`;
+        }
+
+        const medicinesInv = [
+            // Analgesic / Anti-Inflammatory Medications (25 items)
+            {
+                id: "1001",
+                name: "Paracetamol (500mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-07-15",
+                stock: 45,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1002",
+                name: "Ibuprofen (400mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2025-03-20",
+                stock: 10,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1003",
+                name: "Tylenol (500mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-06-15",
+                stock: 25,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1004",
+                name: "Ponstan (500mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2023-12-10",
+                stock: 5,
+                status: "หมดอายุ",
+                statusClass: "bg-red-100 text-red-800"
+            },
+            {
+                id: "1005",
+                name: "Synflex (275mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2025-01-15",
+                stock: 3,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1006",
+                name: "Voltaren (25mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-08-20",
+                stock: 15,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1007",
+                name: "Biocalm (50mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-09-15",
+                stock: 20,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1008",
+                name: "Melox (7.5mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-10-10",
+                stock: 18,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1009",
+                name: "Norgesic",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-11-05",
+                stock: 22,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1010",
+                name: "Aspirin (300mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-05-20",
+                stock: 30,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1011",
+                name: "Naproxen (250mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2025-02-10",
+                stock: 25,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1012",
+                name: "Diclofenac (50mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-09-30",
+                stock: 12,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1013",
+                name: "Tramadol (50mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-11-15",
+                stock: 8,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1014",
+                name: "Celecoxib (200mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2025-01-25",
+                stock: 15,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1015",
+                name: "Arcoxia (60mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-08-05",
+                stock: 7,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1016",
+                name: "Mefenamic Acid (500mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-07-10",
+                stock: 20,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1017",
+                name: "Piroxicam (20mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-06-20",
+                stock: 10,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1018",
+                name: "Ketorolac (10mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-10-15",
+                stock: 5,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1019",
+                name: "Indomethacin (25mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2025-03-10",
+                stock: 15,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1020",
+                name: "Etodolac (400mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-12-05",
+                stock: 8,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1021",
+                name: "Ketoprofen (100mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-11-20",
+                stock: 12,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1022",
+                name: "Flurbiprofen (100mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-09-25",
+                stock: 10,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1023",
+                name: "Sulindac (200mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-08-15",
+                stock: 6,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1024",
+                name: "Tolmetin (400mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-07-30",
+                stock: 9,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1025",
+                name: "Diflunisal (500mg)",
+                category: "Analgesic / Anti-Inflamatory",
+                expiry: "2024-06-05",
+                stock: 7,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+
+            // Antihistamine / Decongestant Medications (15 items)
+            {
+                id: "1026",
+                name: "Decolgen Prin",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-12-31",
+                stock: 50,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1027",
+                name: "Allerrax-FC (Atarax 10mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-12-01",
+                stock: 30,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1028",
+                name: "Chlorpheniramine 4mg (CPM)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2025-01-20",
+                stock: 40,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1029",
+                name: "Cetirizine (10mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-05-10",
+                stock: 15,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1030",
+                name: "Loratadine (10mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-04-22",
+                stock: 8,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1031",
+                name: "Fexofenadine (60mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-10-15",
+                stock: 25,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1032",
+                name: "Desloratadine (5mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-11-30",
+                stock: 20,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1033",
+                name: "Levocetirizine (5mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-09-20",
+                stock: 18,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1034",
+                name: "Diphenhydramine (25mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-08-10",
+                stock: 15,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1035",
+                name: "Pseudoephedrine (60mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-07-05",
+                stock: 10,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1036",
+                name: "Phenylephrine (10mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-06-25",
+                stock: 12,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1037",
+                name: "Brompheniramine (4mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2025-02-15",
+                stock: 22,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1038",
+                name: "Clemastine (1mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-10-05",
+                stock: 8,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1039",
+                name: "Cyproheptadine (4mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-11-10",
+                stock: 15,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1040",
+                name: "Promethazine (25mg)",
+                category: "Antihistamine / Decongestant",
+                expiry: "2024-09-15",
+                stock: 10,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+
+            // Cough Medications (10 items)
+            {
+                id: "1041",
+                name: "Dextromethorphan (15mg)",
+                category: "Cough Medications",
+                expiry: "2024-08-15",
+                stock: 25,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1042",
+                name: "Bromhexine (8mg)",
+                category: "Cough Medications",
+                expiry: "2024-09-30",
+                stock: 18,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1043",
+                name: "Guaifenesin (200mg)",
+                category: "Cough Medications",
+                expiry: "2024-10-20",
+                stock: 20,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1044",
+                name: "Ambroxol (30mg)",
+                category: "Cough Medications",
+                expiry: "2024-11-15",
+                stock: 15,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1045",
+                name: "Codeine (15mg)",
+                category: "Cough Medications",
+                expiry: "2024-07-10",
+                stock: 5,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1046",
+                name: "Benzonatate (100mg)",
+                category: "Cough Medications",
+                expiry: "2024-08-25",
+                stock: 12,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1047",
+                name: "Acetylcysteine (200mg)",
+                category: "Cough Medications",
+                expiry: "2024-09-05",
+                stock: 8,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1048",
+                name: "Carbocisteine (375mg)",
+                category: "Cough Medications",
+                expiry: "2024-10-10",
+                stock: 10,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1049",
+                name: "Terbutaline (2.5mg)",
+                category: "Cough Medications",
+                expiry: "2024-11-30",
+                stock: 15,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1050",
+                name: "Theophylline (200mg)",
+                category: "Cough Medications",
+                expiry: "2024-12-15",
+                stock: 10,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+
+            // GI Medications (12 items)
+            {
+                id: "1051",
+                name: "Omeprazole (20mg)",
+                category: "GI Medications",
+                expiry: "2024-11-20",
+                stock: 30,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1052",
+                name: "Simethicone (80mg)",
+                category: "GI Medications",
+                expiry: "2024-10-05",
+                stock: 22,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1053",
+                name: "Domperidone (10mg)",
+                category: "GI Medications",
+                expiry: "2024-06-10",
+                stock: 5,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1054",
+                name: "Ranitidine (150mg)",
+                category: "GI Medications",
+                expiry: "2024-09-15",
+                stock: 18,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1055",
+                name: "Famotidine (20mg)",
+                category: "GI Medications",
+                expiry: "2024-08-20",
+                stock: 15,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1056",
+                name: "Pantoprazole (40mg)",
+                category: "GI Medications",
+                expiry: "2024-12-10",
+                stock: 20,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1057",
+                name: "Esomeprazole (20mg)",
+                category: "GI Medications",
+                expiry: "2025-01-15",
+                stock: 25,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1058",
+                name: "Lansoprazole (30mg)",
+                category: "GI Medications",
+                expiry: "2024-11-25",
+                stock: 15,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1059",
+                name: "Loperamide (2mg)",
+                category: "GI Medications",
+                expiry: "2024-10-30",
+                stock: 30,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1060",
+                name: "Bismuth Subsalicylate (262mg)",
+                category: "GI Medications",
+                expiry: "2024-09-20",
+                stock: 12,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1061",
+                name: "Metoclopramide (10mg)",
+                category: "GI Medications",
+                expiry: "2024-08-05",
+                stock: 8,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1062",
+                name: "Hyoscine Butylbromide (10mg)",
+                category: "GI Medications",
+                expiry: "2024-07-15",
+                stock: 10,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+
+            // Neuro Medications (8 items)
+            {
+                id: "1063",
+                name: "Diazepam (5mg)",
+                category: "Neuro Medications",
+                expiry: "2025-02-15",
+                stock: 10,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1064",
+                name: "Betahistine (8mg)",
+                category: "Neuro Medications",
+                expiry: "2024-05-20",
+                stock: 12,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1065",
+                name: "Alprazolam (0.5mg)",
+                category: "Neuro Medications",
+                expiry: "2024-10-10",
+                stock: 8,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1066",
+                name: "Lorazepam (1mg)",
+                category: "Neuro Medications",
+                expiry: "2024-11-15",
+                stock: 15,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1067",
+                name: "Clonazepam (0.5mg)",
+                category: "Neuro Medications",
+                expiry: "2024-12-20",
+                stock: 10,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1068",
+                name: "Amitriptyline (10mg)",
+                category: "Neuro Medications",
+                expiry: "2025-01-05",
+                stock: 12,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1069",
+                name: "Fluoxetine (20mg)",
+                category: "Neuro Medications",
+                expiry: "2024-09-25",
+                stock: 8,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1070",
+                name: "Sertraline (50mg)",
+                category: "Neuro Medications",
+                expiry: "2024-08-30",
+                stock: 6,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+
+            // Medications for External Use (8 items)
+            {
+                id: "1071",
+                name: "Calamine Lotion",
+                category: "Medications for External Use",
+                expiry: "2025-01-10",
+                stock: 8,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1072",
+                name: "Povidone Iodine Solution",
+                category: "Medications for External Use",
+                expiry: "2024-12-25",
+                stock: 4,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1073",
+                name: "Hydrocortisone Cream 1%",
+                category: "Medications for External Use",
+                expiry: "2024-11-15",
+                stock: 10,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1074",
+                name: "Clotrimazole Cream 1%",
+                category: "Medications for External Use",
+                expiry: "2024-10-20",
+                stock: 12,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1075",
+                name: "Mupirocin Ointment 2%",
+                category: "Medications for External Use",
+                expiry: "2024-09-05",
+                stock: 6,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1076",
+                name: "Lidocaine Gel 2%",
+                category: "Medications for External Use",
+                expiry: "2024-08-10",
+                stock: 8,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1077",
+                name: "Silver Sulfadiazine Cream 1%",
+                category: "Medications for External Use",
+                expiry: "2024-07-25",
+                stock: 5,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1078",
+                name: "Bacitracin Ointment",
+                category: "Medications for External Use",
+                expiry: "2024-06-30",
+                stock: 7,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+
+            // Eye Medications (5 items)
+            {
+                id: "1079",
+                name: "Artificial Tears",
+                category: "Eye Medications",
+                expiry: "2024-07-30",
+                stock: 6,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1080",
+                name: "Chloramphenicol Eye Drops",
+                category: "Eye Medications",
+                expiry: "2024-04-15",
+                stock: 3,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1081",
+                name: "Tetrahydrozoline Eye Drops",
+                category: "Eye Medications",
+                expiry: "2024-08-20",
+                stock: 8,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1082",
+                name: "Tobramycin Eye Drops",
+                category: "Eye Medications",
+                expiry: "2024-09-10",
+                stock: 5,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1083",
+                name: "Olopatadine Eye Drops",
+                category: "Eye Medications",
+                expiry: "2024-10-05",
+                stock: 7,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+
+            // Emergency Medications (5 items)
+            {
+                id: "1084",
+                name: "Epinephrine (1mg/mL)",
+                category: "Emergency Medications",
+                expiry: "2024-11-10",
+                stock: 5,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1085",
+                name: "Salbutamol Inhaler",
+                category: "Emergency Medications",
+                expiry: "2024-08-05",
+                stock: 2,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1086",
+                name: "Nitroglycerin (0.4mg)",
+                category: "Emergency Medications",
+                expiry: "2024-09-15",
+                stock: 4,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1087",
+                name: "Atropine (0.5mg/mL)",
+                category: "Emergency Medications",
+                expiry: "2024-10-20",
+                stock: 3,
+                status: "ใกล้หมด",
+                statusClass: "bg-orange-100 text-orange-800"
+            },
+            {
+                id: "1088",
+                name: "Glucagon (1mg)",
+                category: "Emergency Medications",
+                expiry: "2024-07-10",
+                stock: 2,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+
+            // Other Medications (5 items)
+            {
+                id: "1089",
+                name: "Multivitamin",
+                category: "Other",
+                expiry: "2025-03-15",
+                stock: 35,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1090",
+                name: "Vitamin C (500mg)",
+                category: "Other",
+                expiry: "2024-09-20",
+                stock: 50,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1091",
+                name: "Calcium Supplement",
+                category: "Other",
+                expiry: "2024-05-05",
+                stock: 7,
+                status: "ใกล้หมดอายุ",
+                statusClass: "bg-yellow-100 text-yellow-800"
+            },
+            {
+                id: "1092",
+                name: "Iron Supplement",
+                category: "Other",
+                expiry: "2024-11-25",
+                stock: 20,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            },
+            {
+                id: "1093",
+                name: "Folic Acid (5mg)",
+                category: "Other",
+                expiry: "2024-10-15",
+                stock: 25,
+                status: "ปกติ",
+                statusClass: "bg-green-100 text-green-800"
+            }
+        ];
+        function medicalInventory() {
+            renderMedicineTable(medicinesInv);
+        }
+        // Function to render medicine table rows
+        function renderMedicineTable(medicineList) {
+            const tableBody = document.getElementById('medicineTableBodyInv');
+            tableBody.innerHTML = '';
+
+            if (medicineList.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('notFoundState').classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('notFoundState').classList.add('hidden');
+
+            medicineList.forEach(medicine => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 fade-in';
+
+                row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">${medicine.name}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="category-badge ${getTypeColor(medicine.category)}">${medicine.category}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">${medicine.stock}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-500">${formatDate(medicine.expiry)}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${medicine.statusClass}">
+                ${medicine.status}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex justify-end space-x-2">
+                <button onclick="openTransactionModal('${medicine.id}')" class="text-primary hover:text-primary/80" title="รายการเคลื่อนไหว">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                </button>
+                <button onclick="openEditMedicineModal('${medicine.id}')" class="text-secondary hover:text-secondary/80" title="แก้ไข">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button onclick="openDeleteModal('${medicine.id}', '${medicine.name}')" class="text-danger hover:text-danger/80" title="ลบ">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          `;
+
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('medicineCount').textContent = `${medicineList.length} รายการ`;
+        }
+
     </script>
     <script>
         (function () {
