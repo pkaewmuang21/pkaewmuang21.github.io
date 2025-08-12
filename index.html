@@ -789,7 +789,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div id="emptyState" class="hidden p-8 text-center">
+                        <div id="emptyStateInv" class="hidden p-8 text-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4M8 16l-4-4 4-4M16 16l4-4-4-4" />
                             </svg>
@@ -4996,12 +4996,12 @@
             tableBody.innerHTML = '';
 
             if (medicineList.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('emptyStateInv').classList.remove('hidden');
                 document.getElementById('notFoundState').classList.add('hidden');
                 return;
             }
 
-            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('emptyStateInv').classList.add('hidden');
             document.getElementById('notFoundState').classList.add('hidden');
 
             medicineList.forEach(medicine => {
