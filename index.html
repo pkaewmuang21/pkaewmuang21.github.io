@@ -2041,7 +2041,7 @@
                             document.getElementById("visitDate2").value = `${year}-${month}-${day}T${hours}:${minutes}`;
 
                             for (const med of medicines) {
-                                const name = document.getElementById('editMedicineName').value;
+                                const name = med.name;
                                 let medId = 0;
                                 let qty = 0;
                                 let snapshot = await db.collection("medicine").where("name", "==", name).get();
