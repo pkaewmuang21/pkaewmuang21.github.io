@@ -5298,6 +5298,8 @@
             medicinesInv = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             medicinesInv.sort((a, b) => a.name.localeCompare(b.name, 'th'));
             document.getElementById('totalMedicines').textContent = medicinesInv.length;
+            document.getElementById('expiringMedicines').textContent = medicinesInv.filter(m => m.expiry && dayDiff(Date.now(), m.expiry) <= 90).length;
+            document.getElementById('lowStockMedicines').textContent = medicinesInv.filter(m => !m.qty || m.qty < 25).length;
 
             // ดึงค่า type ทั้งหมด
             const types = medicinesInv.map(item => item.type);
@@ -5517,7 +5519,7 @@
             if (medicine.expiry && datdiff <= 90) {
                 return 'ใกล้หมดอายุ';
             }
-            if (!medicine.qty) {
+            if (!medicine.qty || medicine.qty <= 0) {
                 return 'ยาหมด';
             }
             if (medicine.qty < 25) {
