@@ -839,7 +839,7 @@
                     </svg>
                 </button>
             </div>
-            <div class="p-4">
+            <div class="p-4 max-h-[70vh] overflow-y-auto">
                 <div id="transactionHistoryLoading" class="hidden py-8 text-center">
                     <i class="fa-solid fa-spinner fa-spin text-3xl text-primary mb-3"></i>
                     <p class="text-gray-500">กำลังโหลดข้อมูล...</p>
@@ -4273,6 +4273,7 @@
             return `${day} ${month} ${year}`;
         }
 
+        var opdCardCache = null;
         var medicinesInv = [
             // Analgesic / Anti-Inflammatory Medications (25 items)
             {
@@ -5140,25 +5141,32 @@
             document.getElementById('transactionHistoryModal').classList.remove('hidden');
 
             try {
-                const rows = [];
-                const empSnapshot = await db.collection('employees').get();
+                let rows = [];
 
-                for (const empDoc of empSnapshot.docs) {
-                    const opdSnapshot = await empDoc.ref.collection('opdCard')
-                        .orderBy('createdDate', 'desc')
-                        .get();
-                    opdSnapshot.forEach(doc => {
-                        const data = doc.data();
-                        const createdDate = data.createdDate ? data.createdDate.toDate() : null;
-                        (data.medicines || []).forEach(med => {
-                            if (med.name === medicine.name) {
-                                rows.push({ createdDate, quantity: med.quantity, unit: med.unit });
-                            }
+                if (opdCardCache) {
+                    rows = opdCardCache
+                        .filter(r => r.name === medicine.name)
+                        .map(r => ({ createdDate: r.createdDate, quantity: r.quantity, unit: r.unit }));
+                } else {
+                    const empSnapshot = await db.collection('employees').get();
+                    const opdSnaps = await Promise.all(
+                        empSnapshot.docs.map(empDoc =>
+                            empDoc.ref.collection('opdCard').orderBy('createdDate', 'desc').get()
+                        )
+                    );
+                    opdSnaps.forEach(snap => {
+                        snap.forEach(doc => {
+                            const data = doc.data();
+                            const createdDate = data.createdDate ? data.createdDate.toDate() : null;
+                            (data.medicines || []).forEach(med => {
+                                if (med.name === medicine.name) {
+                                    rows.push({ createdDate, quantity: med.quantity, unit: med.unit });
+                                }
+                            });
                         });
                     });
+                    rows.sort((a, b) => (b.createdDate || 0) - (a.createdDate || 0));
                 }
-
-                rows.sort((a, b) => (b.createdDate || 0) - (a.createdDate || 0));
 
                 document.getElementById('transactionHistoryLoading').classList.add('hidden');
 
@@ -5222,6 +5230,26 @@
 
 
             renderMedicineTable(medicinesInv);
+
+            // Preload opdCard cache in background (parallel)
+            opdCardCache = null;
+            db.collection('employees').get().then(empSnap => {
+                return Promise.all(empSnap.docs.map(empDoc =>
+                    empDoc.ref.collection('opdCard').orderBy('createdDate', 'desc').get()
+                ));
+            }).then(opdSnaps => {
+                opdCardCache = [];
+                opdSnaps.forEach(snap => {
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const createdDate = data.createdDate ? data.createdDate.toDate() : null;
+                        (data.medicines || []).forEach(med => {
+                            opdCardCache.push({ createdDate, name: med.name, quantity: med.quantity, unit: med.unit });
+                        });
+                    });
+                });
+                opdCardCache.sort((a, b) => (b.createdDate || 0) - (a.createdDate || 0));
+            });
         }
         // Function to render medicine table rows
         function renderMedicineTable(medicineList) {
