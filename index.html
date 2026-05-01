@@ -5140,20 +5140,25 @@
             document.getElementById('transactionHistoryModal').classList.remove('hidden');
 
             try {
-                const snapshot = await db.collectionGroup('opdCard')
-                    .orderBy('createdDate', 'desc')
-                    .get();
-
                 const rows = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const createdDate = data.createdDate ? data.createdDate.toDate() : null;
-                    (data.medicines || []).forEach(med => {
-                        if (med.name === medicine.name) {
-                            rows.push({ createdDate, quantity: med.quantity, unit: med.unit });
-                        }
+                const empSnapshot = await db.collection('employees').get();
+
+                for (const empDoc of empSnapshot.docs) {
+                    const opdSnapshot = await empDoc.ref.collection('opdCard')
+                        .orderBy('createdDate', 'desc')
+                        .get();
+                    opdSnapshot.forEach(doc => {
+                        const data = doc.data();
+                        const createdDate = data.createdDate ? data.createdDate.toDate() : null;
+                        (data.medicines || []).forEach(med => {
+                            if (med.name === medicine.name) {
+                                rows.push({ createdDate, quantity: med.quantity, unit: med.unit });
+                            }
+                        });
                     });
-                });
+                }
+
+                rows.sort((a, b) => (b.createdDate || 0) - (a.createdDate || 0));
 
                 document.getElementById('transactionHistoryLoading').classList.add('hidden');
 
@@ -5175,6 +5180,7 @@
                     tableBody.appendChild(tr);
                 });
             } catch (e) {
+                console.error(e);
                 document.getElementById('transactionHistoryLoading').classList.add('hidden');
                 document.getElementById('transactionHistoryEmpty').classList.remove('hidden');
             }
