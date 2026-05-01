@@ -701,19 +701,6 @@
                 <!-- medical -->
                 <div id="medicalInventory" class="tab-content hidden bg-white rounded-lg shadow-lg p-6">
 
-                    <!-- Inventory Sub-tabs -->
-                    <div class="flex border-b border-gray-200 mb-4">
-                        <button id="invSubTabStock" class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-primary -mb-px" onclick="showInvSubTab('invSubStock', 'invSubTabStock')">
-                            <i class="fa-solid fa-flask mr-1"></i> รายการยา
-                        </button>
-                        <button id="invSubTabMovement" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 -mb-px" onclick="showInvSubTab('invSubMovement', 'invSubTabMovement'); loadMedicineMovements()">
-                            <i class="fa-solid fa-list-check mr-1"></i> รายการเคลื่อนไหว
-                        </button>
-                    </div>
-
-                    <!-- Sub-tab: รายการยา -->
-                    <div id="invSubStock">
-
                     <!-- Search and Filter -->
                     <div class="bg-white rounded-lg shadow-md p-4 mb-6">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -830,40 +817,6 @@
                         </div>
                     </div>
 
-                    </div><!-- end invSubStock -->
-
-                    <!-- Sub-tab: รายการเคลื่อนไหว -->
-                    <div id="invSubMovement" class="hidden">
-                        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                            <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
-                                <h2 class="text-lg font-medium text-gray-800">รายการเคลื่อนไหวยา</h2>
-                                <div class="text-sm text-gray-500" id="movementCount"></div>
-                            </div>
-                            <div id="movementLoadingState" class="hidden p-8 text-center">
-                                <i class="fa-solid fa-spinner fa-spin text-3xl text-primary mb-3"></i>
-                                <p class="text-gray-500">กำลังโหลดข้อมูล...</p>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อยา</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หน่วย</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="medicineMovementTableBody" class="bg-white divide-y divide-gray-200">
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div id="movementEmptyState" class="hidden p-8 text-center">
-                                <i class="fa-solid fa-list-check text-5xl text-gray-300 mb-4"></i>
-                                <h3 class="text-lg font-medium text-gray-500">ไม่พบรายการเคลื่อนไหว</h3>
-                            </div>
-                        </div>
-                    </div><!-- end invSubMovement -->
-
                 </div>
             </div>
         </main>
@@ -875,6 +828,43 @@
             </div>
         </footer>
     </div>
+    <!-- Transaction History Modal -->
+    <div id="transactionHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 modal slide-in">
+            <div class="bg-primary text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+                <h3 id="transactionModalTitle" class="text-lg font-medium">รายการเคลื่อนไหว</h3>
+                <button onclick="document.getElementById('transactionHistoryModal').classList.add('hidden')" class="text-white hover:text-gray-200 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-4">
+                <div id="transactionHistoryLoading" class="hidden py-8 text-center">
+                    <i class="fa-solid fa-spinner fa-spin text-3xl text-primary mb-3"></i>
+                    <p class="text-gray-500">กำลังโหลดข้อมูล...</p>
+                </div>
+                <div id="transactionHistoryEmpty" class="hidden py-8 text-center">
+                    <i class="fa-solid fa-list-check text-5xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500">ไม่พบรายการเคลื่อนไหว</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หน่วย</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionHistoryTableBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Edit Modal -->
     <div id="editModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
         <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-xl bg-white">
@@ -5139,30 +5129,15 @@
                 statusClass: "bg-green-100 text-green-800"
             }
         ];
-        function showInvSubTab(tabId, btnId) {
-            ['invSubStock', 'invSubMovement'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            ['invSubTabStock', 'invSubTabMovement'].forEach(id => {
-                const btn = document.getElementById(id);
-                btn.classList.remove('border-primary', 'text-primary');
-                btn.classList.add('border-transparent', 'text-gray-500');
-            });
-            document.getElementById(tabId).classList.remove('hidden');
-            const activeBtn = document.getElementById(btnId);
-            activeBtn.classList.remove('border-transparent', 'text-gray-500');
-            activeBtn.classList.add('border-primary', 'text-primary');
-        }
+        async function openTransactionModal(medicineId) {
+            const medicine = medicinesInv.find(m => m.id === medicineId);
+            if (!medicine) return;
 
-        async function loadMedicineMovements() {
-            const tableBody = document.getElementById('medicineMovementTableBody');
-            const emptyState = document.getElementById('movementEmptyState');
-            const loadingState = document.getElementById('movementLoadingState');
-            const countEl = document.getElementById('movementCount');
-
-            tableBody.innerHTML = '';
-            emptyState.classList.add('hidden');
-            loadingState.classList.remove('hidden');
+            document.getElementById('transactionModalTitle').textContent = 'รายการเคลื่อนไหว: ' + medicine.name;
+            document.getElementById('transactionHistoryTableBody').innerHTML = '';
+            document.getElementById('transactionHistoryEmpty').classList.add('hidden');
+            document.getElementById('transactionHistoryLoading').classList.remove('hidden');
+            document.getElementById('transactionHistoryModal').classList.remove('hidden');
 
             try {
                 const snapshot = await db.collectionGroup('opdCard')
@@ -5173,36 +5148,35 @@
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const createdDate = data.createdDate ? data.createdDate.toDate() : null;
-                    const medicines = data.medicines || [];
-                    medicines.forEach(med => {
-                        rows.push({ createdDate, name: med.name, quantity: med.quantity, unit: med.unit });
+                    (data.medicines || []).forEach(med => {
+                        if (med.name === medicine.name) {
+                            rows.push({ createdDate, quantity: med.quantity, unit: med.unit });
+                        }
                     });
                 });
 
-                loadingState.classList.add('hidden');
+                document.getElementById('transactionHistoryLoading').classList.add('hidden');
 
                 if (rows.length === 0) {
-                    emptyState.classList.remove('hidden');
-                    countEl.textContent = '';
+                    document.getElementById('transactionHistoryEmpty').classList.remove('hidden');
                     return;
                 }
 
-                countEl.textContent = rows.length + ' รายการ';
+                const tableBody = document.getElementById('transactionHistoryTableBody');
                 rows.forEach(row => {
+                    const dateStr = row.createdDate ? formatDate(row.createdDate.toISOString().split('T')[0]) : '-';
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-gray-50';
-                    const dateStr = row.createdDate ? formatDate(row.createdDate.toISOString().split('T')[0]) : '-';
                     tr.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${dateStr}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.name || '-'}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.quantity ?? '-'}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${row.unit || '-'}</td>
                     `;
                     tableBody.appendChild(tr);
                 });
             } catch (e) {
-                loadingState.classList.add('hidden');
-                countEl.textContent = 'เกิดข้อผิดพลาด';
+                document.getElementById('transactionHistoryLoading').classList.add('hidden');
+                document.getElementById('transactionHistoryEmpty').classList.remove('hidden');
             }
         }
 
