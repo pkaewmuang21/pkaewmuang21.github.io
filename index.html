@@ -705,11 +705,11 @@
                     <div class="bg-white rounded-lg shadow-md p-4 mb-6">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div class="relative flex-grow flex">
-                                <input id="searchInput" type="text" placeholder="ค้นหาชื่อยา..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary">
+                                <input id="medSearchInput" type="text" placeholder="ค้นหาชื่อยา..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
-                                <button id="searchBtn" class="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <button id="medSearchBtn" class="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">
                                     ค้นหา
                                 </button>
                             </div>
@@ -5251,6 +5251,37 @@
                 opdCardCache.sort((a, b) => (b.createdDate || 0) - (a.createdDate || 0));
             });
         }
+        function filterAndRenderMedicines() {
+            const keyword = (document.getElementById('medSearchInput').value || '').trim().toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const sort = document.getElementById('sortBy').value;
+
+            let result = medicinesInv.filter(m => {
+                const matchName = !keyword || (m.name || '').toLowerCase().includes(keyword);
+                const matchCat = !category || m.type === category;
+                return matchName && matchCat;
+            });
+
+            if (sort === 'expiry') {
+                result.sort((a, b) => (a.expiry || '').localeCompare(b.expiry || ''));
+            } else if (sort === 'stock') {
+                result.sort((a, b) => (a.qty || 0) - (b.qty || 0));
+            } else {
+                result.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'th'));
+            }
+
+            renderMedicineTable(result);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('medSearchBtn').addEventListener('click', filterAndRenderMedicines);
+            document.getElementById('medSearchInput').addEventListener('keydown', e => {
+                if (e.key === 'Enter') filterAndRenderMedicines();
+            });
+            document.getElementById('categoryFilter').addEventListener('change', filterAndRenderMedicines);
+            document.getElementById('sortBy').addEventListener('change', filterAndRenderMedicines);
+        });
+
         // Function to render medicine table rows
         function renderMedicineTable(medicineList) {
             const tableBody = document.getElementById('medicineTableBodyInv');
