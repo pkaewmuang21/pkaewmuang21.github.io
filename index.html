@@ -4208,6 +4208,11 @@
 
             rows.sort((a, b) => b.visitDate.localeCompare(a.visitDate));
 
+            // decrypt employeeId ทั้งหมดก่อน render
+            await Promise.all(rows.map(async row => {
+                row.decryptedId = row.employeeId ? await decryptTextFnCached(row.employeeId) : '-';
+            }));
+
             let html = `
                 <h3 class="text-lg font-medium text-navy mb-4">รายงานตามผู้ใช้บริการ</h3>
                 <p class="mb-4">ช่วงวันที่: ${new Date(startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })} - ${new Date(endDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</p>
@@ -4232,12 +4237,12 @@
                         ? new Date(row.visitDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })
                         : '-';
                     const medText = row.medicines.length
-                        ? row.medicines.map(m => `${m.name || ''} ${m.quantity || ''} ${m.unit || ''}`.trim()).join(', ')
+                        ? row.medicines.map(m => `${m.name || ''} ${m.quantity || ''} ${m.unit || ''}`.trim()).join('<br>')
                         : '-';
                     html += `
                         <tr class="hover:bg-gray-50">
                             <td class="py-2 px-4 border-b text-sm">${dateStr}</td>
-                            <td class="py-2 px-4 border-b text-sm">${row.employeeId}</td>
+                            <td class="py-2 px-4 border-b text-sm">${row.decryptedId}</td>
                             <td class="py-2 px-4 border-b text-sm">${row.diagnosis}</td>
                             <td class="py-2 px-4 border-b text-sm">${medText}</td>
                         </tr>
