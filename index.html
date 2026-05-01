@@ -668,7 +668,7 @@
                                     -->
                                 <option value="serviceType">รายงานตามประเภทการให้บริการ</option>
                                 <option value="department">รายงานตามแผนก</option>
-                                <option value="diagnosis">รายงานตามการวินิฉัย</option>
+                                <option value="diagnosis">รายงานตามการวินิจฉัย</option>
                                 <option value="medicine">รายงานตามการใช้ยา</option>
                                 <option value="patient">รายงานตามผู้ใช้บริการ</option>
                             </select>
@@ -3934,9 +3934,9 @@
             let h2 = '';
             let h3 = '';
             if (mode == 'diagnosis') {
-                h1 = 'รายงานตามประเภทการวินิฉฉัย';
-                h2 = 'ประเภทการวินิฉฉัย';
-                h3 = 'สัดส่วนประเภทการวินิฉฉัย';
+                h1 = 'รายงานตามประเภทการวินิจฉัย';
+                h2 = 'ประเภทการวินิจฉัย';
+                h3 = 'สัดส่วนประเภทการวินิจฉัย';
                 records = await countAllDiagnosisByDate(startDate, endDate, location);
             } else if (mode == 'medicine') {
                 h1 = 'รายงานตามการใช้ยา';
