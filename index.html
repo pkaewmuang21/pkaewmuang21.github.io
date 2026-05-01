@@ -701,6 +701,19 @@
                 <!-- medical -->
                 <div id="medicalInventory" class="tab-content hidden bg-white rounded-lg shadow-lg p-6">
 
+                    <!-- Inventory Sub-tabs -->
+                    <div class="flex border-b border-gray-200 mb-4">
+                        <button id="invSubTabStock" class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-primary -mb-px" onclick="showInvSubTab('invSubStock', 'invSubTabStock')">
+                            <i class="fa-solid fa-flask mr-1"></i> รายการยา
+                        </button>
+                        <button id="invSubTabMovement" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 -mb-px" onclick="showInvSubTab('invSubMovement', 'invSubTabMovement'); loadMedicineMovements()">
+                            <i class="fa-solid fa-list-check mr-1"></i> รายการเคลื่อนไหว
+                        </button>
+                    </div>
+
+                    <!-- Sub-tab: รายการยา -->
+                    <div id="invSubStock">
+
                     <!-- Search and Filter -->
                     <div class="bg-white rounded-lg shadow-md p-4 mb-6">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -816,6 +829,40 @@
                             <p class="text-gray-400">ลองค้นหาด้วยคำอื่น หรือเพิ่มรายการยาใหม่</p>
                         </div>
                     </div>
+
+                    </div><!-- end invSubStock -->
+
+                    <!-- Sub-tab: รายการเคลื่อนไหว -->
+                    <div id="invSubMovement" class="hidden">
+                        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                                <h2 class="text-lg font-medium text-gray-800">รายการเคลื่อนไหวยา</h2>
+                                <div class="text-sm text-gray-500" id="movementCount"></div>
+                            </div>
+                            <div id="movementLoadingState" class="hidden p-8 text-center">
+                                <i class="fa-solid fa-spinner fa-spin text-3xl text-primary mb-3"></i>
+                                <p class="text-gray-500">กำลังโหลดข้อมูล...</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อยา</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หน่วย</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="medicineMovementTableBody" class="bg-white divide-y divide-gray-200">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="movementEmptyState" class="hidden p-8 text-center">
+                                <i class="fa-solid fa-list-check text-5xl text-gray-300 mb-4"></i>
+                                <h3 class="text-lg font-medium text-gray-500">ไม่พบรายการเคลื่อนไหว</h3>
+                            </div>
+                        </div>
+                    </div><!-- end invSubMovement -->
 
                 </div>
             </div>
@@ -5092,6 +5139,73 @@
                 statusClass: "bg-green-100 text-green-800"
             }
         ];
+        function showInvSubTab(tabId, btnId) {
+            ['invSubStock', 'invSubMovement'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            ['invSubTabStock', 'invSubTabMovement'].forEach(id => {
+                const btn = document.getElementById(id);
+                btn.classList.remove('border-primary', 'text-primary');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById(btnId);
+            activeBtn.classList.remove('border-transparent', 'text-gray-500');
+            activeBtn.classList.add('border-primary', 'text-primary');
+        }
+
+        async function loadMedicineMovements() {
+            const tableBody = document.getElementById('medicineMovementTableBody');
+            const emptyState = document.getElementById('movementEmptyState');
+            const loadingState = document.getElementById('movementLoadingState');
+            const countEl = document.getElementById('movementCount');
+
+            tableBody.innerHTML = '';
+            emptyState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+
+            try {
+                const snapshot = await db.collectionGroup('opdCard')
+                    .orderBy('createdDate', 'desc')
+                    .get();
+
+                const rows = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const createdDate = data.createdDate ? data.createdDate.toDate() : null;
+                    const medicines = data.medicines || [];
+                    medicines.forEach(med => {
+                        rows.push({ createdDate, name: med.name, quantity: med.quantity, unit: med.unit });
+                    });
+                });
+
+                loadingState.classList.add('hidden');
+
+                if (rows.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    countEl.textContent = '';
+                    return;
+                }
+
+                countEl.textContent = rows.length + ' รายการ';
+                rows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50';
+                    const dateStr = row.createdDate ? formatDate(row.createdDate.toISOString().split('T')[0]) : '-';
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${dateStr}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.name || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.quantity ?? '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${row.unit || '-'}</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            } catch (e) {
+                loadingState.classList.add('hidden');
+                countEl.textContent = 'เกิดข้อผิดพลาด';
+            }
+        }
+
         async function medicalInventory() {
             const snapshot = await db.collection("medicine").get();
             medicinesInv = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
