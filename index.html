@@ -2888,7 +2888,7 @@
                             opdQuery = opdQuery.where("location", "==", location);
                         }
 
-                        opdQuery.get()
+                        opdQuery.orderBy('visitDate', 'desc').get()
                             .then(opdSnapshot => {
                                 if (!opdSnapshot) return;
                                 /*opdSnapshot.forEach(doc => {
