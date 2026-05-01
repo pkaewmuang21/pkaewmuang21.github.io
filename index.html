@@ -670,6 +670,7 @@
                                 <option value="department">รายงานตามแผนก</option>
                                 <option value="diagnosis">รายงานตามการวินิฉัย</option>
                                 <option value="medicine">รายงานตามการใช้ยา</option>
+                                <option value="patient">รายงานตามผู้ใช้บริการ</option>
                             </select>
                         </div>
                         <div id="locationReport-sec" class="hidden">
@@ -3571,6 +3572,9 @@
                     case 'medicine':
                         await generateDiagnosisReport(startDate, endDate + 'T23:59:59', location, 'medicine');
                         break;
+                    case 'patient':
+                        await generatePatientReport(startDate, endDate, location);
+                        break;
                 }
                 hideLoading();
             }, 1000);
@@ -4177,6 +4181,80 @@
             // Create chart
             createChart('doughnut', 'สัดส่วนการรับบริการตามแผนก', chartLabels, chartData, chartColors);
         }
+        async function generatePatientReport(startDate, endDate, location) {
+            const userData = userDb.data();
+            const rows = [];
+
+            const empSnap = await db.collection('employees').get();
+            await Promise.all(empSnap.docs.map(async empDoc => {
+                const empData = empDoc.data();
+                const opdSnap = await empDoc.ref.collection('opdCard')
+                    .where('visitDate', '>=', startDate)
+                    .where('visitDate', '<=', endDate + 'T23:59:59')
+                    .orderBy('visitDate', 'desc')
+                    .get();
+                opdSnap.forEach(doc => {
+                    const data = doc.data();
+                    if (!userData.isAdmin && data.location !== userData.location) return;
+                    if (userData.isAdmin && location && data.location !== location) return;
+                    rows.push({
+                        visitDate: data.visitDate,
+                        employeeId: empData.employeeId || '-',
+                        diagnosis: data.diagnosis || '-',
+                        medicines: data.medicines || []
+                    });
+                });
+            }));
+
+            rows.sort((a, b) => b.visitDate.localeCompare(a.visitDate));
+
+            let html = `
+                <h3 class="text-lg font-medium text-navy mb-4">รายงานตามผู้ใช้บริการ</h3>
+                <p class="mb-4">ช่วงวันที่: ${new Date(startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })} - ${new Date(endDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
+                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CN</th>
+                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การวินิจฉัย</th>
+                                <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ยาที่ได้รับ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (rows.length === 0) {
+                html += `<tr><td colspan="4" class="py-4 px-4 text-center text-gray-500">ไม่พบข้อมูล</td></tr>`;
+            } else {
+                rows.forEach(row => {
+                    const dateStr = row.visitDate
+                        ? new Date(row.visitDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })
+                        : '-';
+                    const medText = row.medicines.length
+                        ? row.medicines.map(m => `${m.name || ''} ${m.quantity || ''} ${m.unit || ''}`.trim()).join(', ')
+                        : '-';
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-2 px-4 border-b text-sm">${dateStr}</td>
+                            <td class="py-2 px-4 border-b text-sm">${row.employeeId}</td>
+                            <td class="py-2 px-4 border-b text-sm">${row.diagnosis}</td>
+                            <td class="py-2 px-4 border-b text-sm">${medText}</td>
+                        </tr>
+                    `;
+                });
+                html += `
+                    <tr class="bg-gray-100 font-medium">
+                        <td class="py-2 px-4 border-b" colspan="3">รวม</td>
+                        <td class="py-2 px-4 border-b">${rows.length} รายการ</td>
+                    </tr>
+                `;
+            }
+
+            html += `</tbody></table></div>`;
+            reportResults.innerHTML = html;
+        }
+
         // Create Chart
         function createChart(type, title, labels, data, colors = null) {
             // Destroy previous chart if exists
