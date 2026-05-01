@@ -828,6 +828,39 @@
             </div>
         </footer>
     </div>
+    <!-- Receive Medicine Modal -->
+    <div id="receiveMedicineModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 modal slide-in">
+            <div class="bg-green-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+                <h3 id="receiveMedicineTitle" class="text-lg font-medium">รับยาเข้าคลัง</h3>
+                <button onclick="document.getElementById('receiveMedicineModal').classList.add('hidden')" class="text-white hover:text-gray-200 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="receiveMedicineId">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">จำนวนที่รับ <span class="text-danger">*</span></label>
+                    <input type="number" id="receiveQty" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">วันที่รับ <span class="text-danger">*</span></label>
+                    <input type="date" id="receiveDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="document.getElementById('receiveMedicineModal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                        ยกเลิก
+                    </button>
+                    <button onclick="saveReceiveMedicine()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        บันทึก
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Transaction History Modal -->
     <div id="transactionHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 modal slide-in">
@@ -855,6 +888,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หน่วย</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภท</th>
                             </tr>
                         </thead>
                         <tbody id="transactionHistoryTableBody" class="bg-white divide-y divide-gray-200">
@@ -5130,6 +5164,57 @@
                 statusClass: "bg-green-100 text-green-800"
             }
         ];
+        function openReceiveMedicineModal(medicineId) {
+            const medicine = medicinesInv.find(m => m.id === medicineId);
+            if (!medicine) return;
+            document.getElementById('receiveMedicineId').value = medicineId;
+            document.getElementById('receiveMedicineTitle').textContent = 'รับยาเข้าคลัง: ' + medicine.name;
+            document.getElementById('receiveQty').value = '';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('receiveDate').value = today;
+            document.getElementById('receiveMedicineModal').classList.remove('hidden');
+        }
+
+        async function saveReceiveMedicine() {
+            const medicineId = document.getElementById('receiveMedicineId').value;
+            const qty = parseInt(document.getElementById('receiveQty').value);
+            const receiveDate = document.getElementById('receiveDate').value;
+
+            if (!qty || qty <= 0 || !receiveDate) {
+                showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+
+            showLoading('กำลังบันทึกข้อมูล...');
+            try {
+                const medicineRef = db.collection('medicine').doc(medicineId);
+                const medicineSnap = await medicineRef.get();
+                const currentQty = parseInt(medicineSnap.data().qty) || 0;
+
+                await medicineRef.collection('transactions').add({
+                    createdBy: userDb.data().name,
+                    createDate: firebase.firestore.Timestamp.fromDate(new Date(receiveDate)),
+                    qty: qty,
+                    type: 'receive'
+                });
+
+                await medicineRef.update({
+                    qty: currentQty + qty,
+                    updateDate: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('receiveMedicineModal').classList.add('hidden');
+                opdCardCache = null;
+                await medicalInventory();
+                hideLoading();
+                showNotification('success', 'สำเร็จ', 'บันทึกการรับยาสำเร็จ');
+            } catch (e) {
+                console.error(e);
+                hideLoading();
+                showNotification('error', 'เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้');
+            }
+        }
+
         async function openTransactionModal(medicineId) {
             const medicine = medicinesInv.find(m => m.id === medicineId);
             if (!medicine) return;
@@ -5143,10 +5228,11 @@
             try {
                 let rows = [];
 
+                // ดึงรายการจ่าย (OPD card)
                 if (opdCardCache) {
-                    rows = opdCardCache
+                    opdCardCache
                         .filter(r => r.name === medicine.name)
-                        .map(r => ({ createdDate: r.createdDate, quantity: r.quantity, unit: r.unit }));
+                        .forEach(r => rows.push({ createdDate: r.createdDate, quantity: r.quantity, unit: r.unit, rowType: 'dispense' }));
                 } else {
                     const empSnapshot = await db.collection('employees').get();
                     const opdSnaps = await Promise.all(
@@ -5160,13 +5246,22 @@
                             const createdDate = data.createdDate ? data.createdDate.toDate() : null;
                             (data.medicines || []).forEach(med => {
                                 if (med.name === medicine.name) {
-                                    rows.push({ createdDate, quantity: med.quantity, unit: med.unit });
+                                    rows.push({ createdDate, quantity: med.quantity, unit: med.unit, rowType: 'dispense' });
                                 }
                             });
                         });
                     });
-                    rows.sort((a, b) => (b.createdDate || 0) - (a.createdDate || 0));
                 }
+
+                // ดึงรายการรับยา (medicine/transactions)
+                const txSnap = await db.collection('medicine').doc(medicineId).collection('transactions').get();
+                txSnap.forEach(doc => {
+                    const d = doc.data();
+                    const createdDate = d.createDate ? d.createDate.toDate() : null;
+                    rows.push({ createdDate, quantity: d.qty, unit: medicine.unit, rowType: 'receive' });
+                });
+
+                rows.sort((a, b) => (b.createdDate || 0) - (a.createdDate || 0));
 
                 document.getElementById('transactionHistoryLoading').classList.add('hidden');
 
@@ -5178,12 +5273,16 @@
                 const tableBody = document.getElementById('transactionHistoryTableBody');
                 rows.forEach(row => {
                     const dateStr = row.createdDate ? formatDate(row.createdDate.toISOString().split('T')[0]) : '-';
+                    const typeBadge = row.rowType === 'receive'
+                        ? '<span class="category-badge bg-green-100 text-green-800">รับ</span>'
+                        : '<span class="category-badge category-emergency">จ่าย</span>';
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-gray-50';
                     tr.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${dateStr}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.quantity ?? '-'}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${row.unit || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${typeBadge}</td>
                     `;
                     tableBody.appendChild(tr);
                 });
@@ -5320,6 +5419,11 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex justify-end space-x-2">
+                        <button onclick="openReceiveMedicineModal('${medicine.id}')" class="text-green-600 hover:text-green-700" title="รับยา">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                          </svg>
+                        </button>
                     <button onclick="openTransactionModal('${medicine.id}')" class="text-primary hover:text-primary/80" title="รายการเคลื่อนไหว">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
