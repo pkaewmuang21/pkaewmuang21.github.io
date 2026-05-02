@@ -91,6 +91,41 @@
       return { col, key: collectionKeys[col] };
     }
 
+    function serializeRow(data) {
+      const row = {};
+      for (const [k, v] of Object.entries(data)) {
+        if (v && typeof v === 'object' && typeof v.toDate === 'function') {
+          row[k] = v.toDate().toISOString();
+        } else if (v && typeof v === 'object' && !Array.isArray(v)) {
+          row[k] = JSON.stringify(v);
+        } else {
+          row[k] = v;
+        }
+      }
+      return row;
+    }
+
+    const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+    const TS_RE  = /^Timestamp\(seconds=(\d+),\s*nanoseconds=(\d+)\)$/;
+    function deserializeRow(row) {
+      const out = {};
+      for (const [k, v] of Object.entries(row)) {
+        if (typeof v === 'string') {
+          const tsMatch = v.match(TS_RE);
+          if (tsMatch) {
+            out[k] = new firebase.firestore.Timestamp(parseInt(tsMatch[1]), parseInt(tsMatch[2]));
+            continue;
+          }
+          if (ISO_RE.test(v)) {
+            const d = new Date(v);
+            if (!isNaN(d)) { out[k] = firebase.firestore.Timestamp.fromDate(d); continue; }
+          }
+        }
+        out[k] = v;
+      }
+      return out;
+    }
+
     async function exportCsv() {
       const { col } = getSelected();
       document.getElementById('output').textContent = `กำลัง export ${col}...`;
@@ -100,7 +135,7 @@
           document.getElementById('output').textContent = `ไม่มีข้อมูลใน ${col}`;
           return;
         }
-        const rows = snapshot.docs.map(doc => doc.data());
+        const rows = snapshot.docs.map(doc => serializeRow(doc.data()));
         const csv = Papa.unparse(rows);
         const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -211,7 +246,7 @@
             if (!docId) { skipped++; continue; }
 
             try {
-              await db.collection(col).doc(docId).update(row);
+              await db.collection(col).doc(docId).update(deserializeRow(row));
               success++;
             } catch (error) {
               console.error(`เกิดข้อผิดพลาด ${key}=${keyValue}:`, error);
