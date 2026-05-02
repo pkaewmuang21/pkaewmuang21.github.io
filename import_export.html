@@ -183,41 +183,46 @@
       const file = document.getElementById('csvFile').files[0];
       if (!file) { alert('กรุณาเลือกไฟล์ CSV'); return; }
 
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        let text = e.target.result;
-        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      document.getElementById('output').textContent = `กำลังโหลดข้อมูลจาก ${col}...`;
 
-        Papa.parse(text, {
-          header: true,
-          skipEmptyLines: true,
-          complete: async function(results) {
-            const rows = results.data;
-            document.getElementById('output').textContent = `กำลังนำเข้า ${col} ${rows.length} รายการ...`;
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async function(results) {
+          const rows = results.data;
 
-            let success = 0, skipped = 0, failed = 0;
-            for (const row of rows) {
-              const cleanRow = {};
-              for (const k of Object.keys(row)) {
-                cleanRow[k.trim()] = (row[k] || '').toString().trim();
-              }
-              const keyValue = cleanRow[key] || '';
-              if (!keyValue) { skipped++; continue; }
-              try {
-                await db.collection(col).doc(keyValue).set(cleanRow, { merge: true });
-                success++;
-              } catch (error) {
-                console.error(`เกิดข้อผิดพลาด ${key}=${keyValue}:`, error);
-                failed++;
-              }
+          // โหลด docs ทั้งหมดจาก Firestore แล้ว map ด้วย key field
+          const snapshot = await db.collection(col).get();
+          const docMap = {};
+          snapshot.forEach(doc => {
+            const val = (doc.data()[key] || '').toString().trim();
+            if (val) docMap[val] = doc.id;
+          });
+
+          document.getElementById('output').textContent =
+            `พบ ${snapshot.size} docs ใน Firestore, CSV มี ${rows.length} รายการ กำลังอัปเดต...`;
+
+          let success = 0, skipped = 0, failed = 0;
+          for (const row of rows) {
+            const keyValue = (row[key] || '').toString().trim();
+            if (!keyValue) { skipped++; continue; }
+
+            const docId = docMap[keyValue];
+            if (!docId) { skipped++; continue; }
+
+            try {
+              await db.collection(col).doc(docId).update(row);
+              success++;
+            } catch (error) {
+              console.error(`เกิดข้อผิดพลาด ${key}=${keyValue}:`, error);
+              failed++;
             }
-            const skipMsg = skipped > 0 ? `, ข้าม ${skipped} รายการ (ไม่มี ${key})` : '';
-            document.getElementById('output').textContent =
-              `เสร็จสิ้น [${col}]: อัปเดต ${success} รายการ${skipMsg}, ผิดพลาด ${failed} รายการ`;
           }
-        });
-      };
-      reader.readAsText(file, 'UTF-8');
+          const skipMsg = skipped > 0 ? `, ข้าม ${skipped} รายการ (ไม่พบใน Firestore)` : '';
+          document.getElementById('output').textContent =
+            `เสร็จสิ้น [${col}]: อัปเดต ${success} รายการ${skipMsg}, ผิดพลาด ${failed} รายการ`;
+        }
+      });
     }
   </script>
 
