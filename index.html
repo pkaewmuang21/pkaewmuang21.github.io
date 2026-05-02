@@ -833,7 +833,14 @@
     <div id="receiveMedicineModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 modal slide-in">
             <div id="receiveMedicineHeader" class="bg-green-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
-                <h3 id="receiveMedicineTitle" class="text-lg font-medium">รับยาเข้าคลัง</h3>
+                <div class="flex items-center gap-2">
+                    <span id="txCriteriaIcon">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </span>
+                    <h3 id="receiveMedicineTitle" class="text-lg font-medium">รับยาเข้าคลัง</h3>
+                </div>
                 <button onclick="document.getElementById('receiveMedicineModal').classList.add('hidden')" class="text-white hover:text-gray-200 focus:outline-none">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -5545,6 +5552,7 @@
                 headerEl.className = 'bg-green-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center';
                 saveBtnEl.className = 'px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700';
                 titleEl.textContent = 'รับยาเข้าคลัง' + (name ? ': ' + name : '');
+                document.getElementById('txCriteriaIcon').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>`;
             } else {
                 subTypeEl.innerHTML = `
                     <option value="Expire">Expire</option>
@@ -5553,6 +5561,7 @@
                 headerEl.className = 'bg-red-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center';
                 saveBtnEl.className = 'px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700';
                 titleEl.textContent = 'จ่ายยา' + (name ? ': ' + name : '');
+                document.getElementById('txCriteriaIcon').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>`;
             }
         }
 
@@ -5592,7 +5601,7 @@
                 await medicineRef.collection('transactions').add({
                     createdBy: userDb.data().name,
                     createDate: firebase.firestore.Timestamp.fromDate(new Date(receiveDate)),
-                    qty: isReceive ? qty : -qty,
+                    qty: qty,
                     type: criteria,
                     subType: subType
                 });
