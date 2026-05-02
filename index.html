@@ -3981,12 +3981,38 @@
                                     <tbody>
                       `;
 
+            const disPalette = [
+                { bg: 'bg-blue-100',   text: 'text-blue-800'   },
+                { bg: 'bg-teal-100',   text: 'text-teal-800'   },
+                { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+                { bg: 'bg-pink-100',   text: 'text-pink-800'   },
+                { bg: 'bg-purple-100', text: 'text-purple-800' },
+                { bg: 'bg-orange-100', text: 'text-orange-800' },
+                { bg: 'bg-green-100',  text: 'text-green-800'  },
+                { bg: 'bg-rose-100',   text: 'text-rose-800'   },
+                { bg: 'bg-sky-100',    text: 'text-sky-800'    },
+                { bg: 'bg-amber-100',  text: 'text-amber-800'  },
+            ];
+
             const totalCount = records.reduce((sum, item) => sum + item.qty, 0);
             let totalPercentage = 0;
             const chartLabels = [];
             const chartData = [];
             const systemCountMap = {};
 
+            // pass 1: รวม qty ต่อ disease_system เพื่อกำหนด color index
+            if (isDiagnosis) {
+                records.forEach(({ name, qty }) => {
+                    const sys = icd10Map[name] || 'ไม่ระบุ';
+                    systemCountMap[sys] = (systemCountMap[sys] || 0) + qty;
+                });
+            }
+            // เรียง descending → กำหนด index ให้ match กับ baseColors ใน createDonutChart
+            const systemColorIdx = {};
+            Object.entries(systemCountMap).sort((a, b) => b[1] - a[1])
+                .forEach(([sys], i) => { systemColorIdx[sys] = i; });
+
+            // pass 2: render ตาราง
             records.forEach(type => {
                 const count = type.qty;
                 const name = type.name;
@@ -3995,15 +4021,12 @@
 
                 let extraCell = '';
                 if (isDiagnosis) {
-                    const sys = icd10Map[name] || '';
+                    const sys = icd10Map[name] || 'ไม่ระบุ';
+                    const ci = (systemColorIdx[sys] ?? 0) % disPalette.length;
+                    const p = disPalette[ci];
                     extraCell = `<td class="py-2 px-4 border-b">
-                        ${sys ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">${sys}</span>` : '-'}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${p.bg} ${p.text}">${sys}</span>
                     </td>`;
-                    if (sys) {
-                        systemCountMap[sys] = (systemCountMap[sys] || 0) + count;
-                    } else {
-                        systemCountMap['ไม่ระบุ'] = (systemCountMap['ไม่ระบุ'] || 0) + count;
-                    }
                 } else {
                     chartLabels.push(name);
                     chartData.push(count);
@@ -4019,12 +4042,10 @@
 `;
             });
 
-            // สร้าง chart data จาก disease_system (เฉพาะ diagnosis mode)
+            // chart data จาก disease_system เรียง desc (เฉพาะ diagnosis)
             if (isDiagnosis) {
-                Object.entries(systemCountMap).sort((a,b) => b[1]-a[1]).forEach(([sys, qty]) => {
-                    chartLabels.push(sys);
-                    chartData.push(qty);
-                });
+                Object.entries(systemCountMap).sort((a, b) => b[1] - a[1])
+                    .forEach(([sys, qty]) => { chartLabels.push(sys); chartData.push(qty); });
             }
 
             html += `
