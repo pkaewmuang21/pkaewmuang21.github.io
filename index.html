@@ -3928,16 +3928,21 @@
             createChart('bar', 'จำนวนผู้รับบริการรายเดือน', chartLabels, chartData);
         }
         async function generateDiagnosisReport(startDate, endDate, location, mode) {
-            // Group records by service type
             let records = [];
-            let h1 = '';
-            let h2 = '';
-            let h3 = '';
+            let h1 = '', h2 = '', h3 = '';
+            let icd10Map = {};
+
             if (mode == 'diagnosis') {
                 h1 = 'รายงานตามประเภทการวินิจฉัย';
                 h2 = 'ประเภทการวินิจฉัย';
-                h3 = 'สัดส่วนประเภทการวินิจฉัย';
+                h3 = 'สัดส่วนตาม Disease System';
                 records = await countAllDiagnosisByDate(startDate, endDate, location);
+                // โหลด ICD10 เพื่อ map code → disease_system
+                const icd10Snap = await db.collection('ICD10').get();
+                icd10Snap.forEach(doc => {
+                    const d = doc.data();
+                    icd10Map[d.code || doc.id] = d.disease_system || '';
+                });
             } else if (mode == 'medicine') {
                 h1 = 'รายงานตามการใช้ยา';
                 h2 = 'การใช้ยา';
@@ -3949,8 +3954,13 @@
                 h3 = 'สัดส่วนตามแผนก';
                 records = await countAllOpdCardByDepartment(startDate, endDate, location);
             }
-            let html = `
 
+            const isDiagnosis = mode === 'diagnosis';
+            const extraHeader = isDiagnosis
+                ? `<th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disease System</th>`
+                : '';
+
+            let html = `
                     <h3 class="text-lg font-medium text-navy mb-4">${h1}</h3>
                     <p class="mb-4">ช่วงวันที่: ${new Date(startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })} - ${new Date(endDate).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -3960,44 +3970,63 @@
                                     <thead class="bg-gray-100">
                                         <tr>
                                             <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${h2}</th>
+                                            ${extraHeader}
                                             <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
                                             <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ร้อยละ</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                       `;
-            //const totalCount = records.length;
+
             const totalCount = records.reduce((sum, item) => sum + item.qty, 0);
             let totalPercentage = 0;
             const chartLabels = [];
             const chartData = [];
-            const chartColors = ['rgba(54, 162, 235, 0.8)', 'rgba(75, 192, 192, 0.8)', 'rgba(255, 206, 86, 0.8)', 'rgba(255, 99, 132, 0.8)', 'rgba(153, 102, 255, 0.8)'];
-            //Object.keys(records).forEach((type, index) => {
-            records.forEach((type, index) => {
-                /*const {
-                    name,
-                    count
-                } = serviceTypes[type];*/
-                console.log(type)
+            const systemCountMap = {};
+
+            records.forEach(type => {
                 const count = type.qty;
                 const name = type.name;
                 const percentage = totalCount > 0 ? (count / totalCount * 100).toFixed(2) : 0;
                 totalPercentage += parseFloat(percentage);
-                chartLabels.push(name);
-                chartData.push(count);
-                html += `
 
+                let extraCell = '';
+                if (isDiagnosis) {
+                    const sys = icd10Map[name] || '';
+                    extraCell = `<td class="py-2 px-4 border-b">
+                        ${sys ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">${sys}</span>` : '-'}
+                    </td>`;
+                    if (sys) {
+                        systemCountMap[sys] = (systemCountMap[sys] || 0) + count;
+                    } else {
+                        systemCountMap['ไม่ระบุ'] = (systemCountMap['ไม่ระบุ'] || 0) + count;
+                    }
+                } else {
+                    chartLabels.push(name);
+                    chartData.push(count);
+                }
+
+                html += `
                                     <tr>
                                         <td class="py-2 px-4 border-b">${name}</td>
+                                        ${extraCell}
                                         <td class="py-2 px-4 border-b">${count}</td>
                                         <td class="py-2 px-4 border-b">${percentage}%</td>
                                     </tr>
 `;
             });
-            html += `
 
+            // สร้าง chart data จาก disease_system (เฉพาะ diagnosis mode)
+            if (isDiagnosis) {
+                Object.entries(systemCountMap).sort((a,b) => b[1]-a[1]).forEach(([sys, qty]) => {
+                    chartLabels.push(sys);
+                    chartData.push(qty);
+                });
+            }
+
+            html += `
                                         <tr class="bg-gray-100 font-medium">
-                                            <td class="py-2 px-4 border-b">รวม</td>
+                                            <td class="py-2 px-4 border-b" ${isDiagnosis ? 'colspan="2"' : ''}>รวม</td>
                                             <td class="py-2 px-4 border-b">${totalCount}</td>
                                             <td class="py-2 px-4 border-b">${totalPercentage.toFixed(2)}%</td>
                                         </tr>
