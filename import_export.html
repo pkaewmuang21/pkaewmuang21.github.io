@@ -28,6 +28,7 @@
     </div>
     <div style="margin-top:8px">
       <input type="file" id="csvFile" accept=".csv">
+      <button onclick="checkCsv()">Check CSV</button>
       <button onclick="importCsv()">Import CSV</button>
     </div>
     <div style="margin-top:8px">
@@ -159,57 +160,64 @@
       output.textContent = `ลบเสร็จ: ${deleted} doc, ผิดพลาด ${failed} doc`;
     }
 
-    function importCsv() {
-      const { col, key } = getSelected();
-      const fileInput = document.getElementById('csvFile');
-      const file = fileInput.files[0];
-      if (!file) {
-        alert("กรุณาเลือกไฟล์ CSV");
-        return;
-      }
-
+    function checkCsv() {
+      const file = document.getElementById('csvFile').files[0];
+      if (!file) { alert('กรุณาเลือกไฟล์ CSV'); return; }
       Papa.parse(file, {
         header: true,
-        skipEmptyLines: true,
-        transformHeader: h => h.trim().replace(/^﻿/, ''),
-        complete: async function(results) {
-          const rows = results.data;
-          document.getElementById('output').textContent = `กำลังนำเข้า ${col} ${rows.length} รายการ...`;
+        preview: 1,
+        complete: function(results) {
+          const rawKeys = Object.keys(results.data[0] || {});
+          const info = rawKeys.map(k => {
+            const codes = Array.from(k).map(c => c.charCodeAt(0));
+            return `"${k}" [${codes.join(',')}]`;
+          });
+          document.getElementById('output').textContent =
+            `Columns (${rawKeys.length}):\n` + info.join('\n');
+        }
+      });
+    }
 
-          const normalizeKey = k => {
-            let s = k.trim();
-            while (s.length > 0 && s.charCodeAt(0) === 0xFEFF) s = s.slice(1);
-            return s.trim();
-          };
+    function importCsv() {
+      const { col, key } = getSelected();
+      const file = document.getElementById('csvFile').files[0];
+      if (!file) { alert('กรุณาเลือกไฟล์ CSV'); return; }
 
-          let success = 0, skipped = 0, failed = 0;
-          for (const row of rows) {
-            const cleanRow = {};
-            for (const k of Object.keys(row)) {
-              cleanRow[normalizeKey(k)] = (row[k] || '').toString().trim();
-            }
-            const keyValue = cleanRow[key] || '';
-            if (!keyValue) {
-              skipped++;
-              continue;
-            }
-            try {
-              await db.collection(col).doc(keyValue).update(cleanRow);
-              success++;
-            } catch (error) {
-              if (error.code === 'not-found') {
-                skipped++;
-              } else {
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        let text = e.target.result;
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+        Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+          complete: async function(results) {
+            const rows = results.data;
+            document.getElementById('output').textContent = `กำลังนำเข้า ${col} ${rows.length} รายการ...`;
+
+            let success = 0, skipped = 0, failed = 0;
+            for (const row of rows) {
+              const cleanRow = {};
+              for (const k of Object.keys(row)) {
+                cleanRow[k.trim()] = (row[k] || '').toString().trim();
+              }
+              const keyValue = cleanRow[key] || '';
+              if (!keyValue) { skipped++; continue; }
+              try {
+                await db.collection(col).doc(keyValue).set(cleanRow, { merge: true });
+                success++;
+              } catch (error) {
                 console.error(`เกิดข้อผิดพลาด ${key}=${keyValue}:`, error);
                 failed++;
               }
             }
+            const skipMsg = skipped > 0 ? `, ข้าม ${skipped} รายการ (ไม่มี ${key})` : '';
+            document.getElementById('output').textContent =
+              `เสร็จสิ้น [${col}]: อัปเดต ${success} รายการ${skipMsg}, ผิดพลาด ${failed} รายการ`;
           }
-          const skipMsg = skipped > 0 ? `, ข้าม ${skipped} รายการ (ไม่มี ${key})` : '';
-          document.getElementById('output').textContent =
-            `เสร็จสิ้น [${col}]: อัปเดต ${success} รายการ${skipMsg}, ผิดพลาด ${failed} รายการ`;
-        }
-      });
+        });
+      };
+      reader.readAsText(file, 'UTF-8');
     }
   </script>
 
