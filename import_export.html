@@ -33,6 +33,12 @@
     <div style="margin-top:8px">
       <button onclick="exportCsv()">Export CSV</button>
     </div>
+    <div style="margin-top:16px; border-top:1px solid #ccc; padding-top:12px">
+      Doc ID length &lt;
+      <input type="number" id="idLenThreshold" value="7" min="1" style="width:50px; border:1px solid #ccc; padding:2px 4px;">
+      <button onclick="previewDeleteByIdLen()">Preview</button>
+      <button onclick="deleteByIdLen()" style="color:white; background:#dc3545; border:none; padding:4px 10px; border-radius:4px; cursor:pointer">Delete</button>
+    </div>
   </div>
 
   <pre id="output"></pre>
@@ -106,6 +112,51 @@
       } catch (error) {
         document.getElementById('output').textContent = 'Export ล้มเหลว: ' + error.message;
       }
+    }
+
+    async function getDocsToDelete() {
+      const { col } = getSelected();
+      const threshold = parseInt(document.getElementById('idLenThreshold').value) || 7;
+      const snapshot = await db.collection(col).get();
+      return snapshot.docs.filter(doc => doc.id.length < threshold);
+    }
+
+    async function previewDeleteByIdLen() {
+      const output = document.getElementById('output');
+      output.textContent = 'กำลังโหลด...';
+      const { col } = getSelected();
+      const threshold = parseInt(document.getElementById('idLenThreshold').value) || 7;
+      const docs = await getDocsToDelete();
+      if (docs.length === 0) {
+        output.textContent = `ไม่พบ doc ที่มี ID length < ${threshold} ใน ${col}`;
+        return;
+      }
+      output.textContent = `พบ ${docs.length} doc ที่ ID length < ${threshold}:\n` +
+        docs.map(d => `  ${d.id} (${d.id.length} chars)`).join('\n');
+    }
+
+    async function deleteByIdLen() {
+      const { col } = getSelected();
+      const threshold = parseInt(document.getElementById('idLenThreshold').value) || 7;
+      const docs = await getDocsToDelete();
+      if (docs.length === 0) {
+        document.getElementById('output').textContent = 'ไม่พบ doc ที่ต้องลบ';
+        return;
+      }
+      if (!confirm(`ยืนยันลบ ${docs.length} doc ที่มี ID length < ${threshold} ใน ${col}?`)) return;
+      const output = document.getElementById('output');
+      output.textContent = `กำลังลบ ${docs.length} doc...`;
+      let deleted = 0, failed = 0;
+      for (const doc of docs) {
+        try {
+          await db.collection(col).doc(doc.id).delete();
+          deleted++;
+        } catch (e) {
+          console.error('ลบล้มเหลว:', doc.id, e);
+          failed++;
+        }
+      }
+      output.textContent = `ลบเสร็จ: ${deleted} doc, ผิดพลาด ${failed} doc`;
     }
 
     function importCsv() {
