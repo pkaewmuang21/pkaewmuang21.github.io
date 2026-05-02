@@ -19,6 +19,14 @@
 
   <div id="importSection" style="display:none; margin-top:16px">
     <div>
+      <label>Collection:
+        <select id="collectionSelect">
+          <option value="ICD10">ICD10 (key: code)</option>
+          <option value="medicine">medicine (key: name)</option>
+        </select>
+      </label>
+    </div>
+    <div style="margin-top:8px">
       <input type="file" id="csvFile" accept=".csv">
       <button onclick="importCsv()">Import CSV</button>
     </div>
@@ -66,12 +74,23 @@
       auth.signOut();
     }
 
+    const collectionKeys = {
+      ICD10: 'code',
+      medicine: 'name'
+    };
+
+    function getSelected() {
+      const col = document.getElementById('collectionSelect').value;
+      return { col, key: collectionKeys[col] };
+    }
+
     async function exportCsv() {
-      document.getElementById('output').textContent = 'กำลัง export...';
+      const { col } = getSelected();
+      document.getElementById('output').textContent = `กำลัง export ${col}...`;
       try {
-        const snapshot = await db.collection("ICD10").get();
+        const snapshot = await db.collection(col).get();
         if (snapshot.empty) {
-          document.getElementById('output').textContent = 'ไม่มีข้อมูลใน collection';
+          document.getElementById('output').textContent = `ไม่มีข้อมูลใน ${col}`;
           return;
         }
         const rows = snapshot.docs.map(doc => doc.data());
@@ -80,16 +99,17 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `ICD10_${new Date().toISOString().slice(0,10)}.csv`;
+        a.download = `${col}_${new Date().toISOString().slice(0,10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
-        document.getElementById('output').textContent = `Export สำเร็จ ${rows.length} รายการ`;
+        document.getElementById('output').textContent = `Export ${col} สำเร็จ ${rows.length} รายการ`;
       } catch (error) {
         document.getElementById('output').textContent = 'Export ล้มเหลว: ' + error.message;
       }
     }
 
     function importCsv() {
+      const { col, key } = getSelected();
       const fileInput = document.getElementById('csvFile');
       const file = fileInput.files[0];
       if (!file) {
@@ -102,26 +122,26 @@
         skipEmptyLines: true,
         complete: async function(results) {
           const rows = results.data;
-          document.getElementById('output').textContent = `กำลังนำเข้า ${rows.length} รายการ...`;
+          document.getElementById('output').textContent = `กำลังนำเข้า ${col} ${rows.length} รายการ...`;
 
           let success = 0, failed = 0;
           for (const row of rows) {
-            const code = row.code;
-            if (!code) {
-              console.warn('ข้ามแถวที่ไม่มี code:', row);
+            const keyValue = row[key];
+            if (!keyValue) {
+              console.warn(`ข้ามแถวที่ไม่มี ${key}:`, row);
               failed++;
               continue;
             }
             try {
-              await db.collection("ICD10").doc(code).set(row, { merge: true });
+              await db.collection(col).doc(keyValue).set(row, { merge: true });
               success++;
             } catch (error) {
-              console.error(`เกิดข้อผิดพลาด code=${code}:`, error);
+              console.error(`เกิดข้อผิดพลาด ${key}=${keyValue}:`, error);
               failed++;
             }
           }
           document.getElementById('output').textContent =
-            `เสร็จสิ้น: สำเร็จ ${success} รายการ, ผิดพลาด ${failed} รายการ`;
+            `เสร็จสิ้น [${col}]: สำเร็จ ${success} รายการ, ผิดพลาด ${failed} รายการ`;
         }
       });
     }
