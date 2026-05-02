@@ -947,7 +947,7 @@
                 </div>
                 <div class="mt-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
-                    <textarea id="editMedicineNote" rows="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    <textarea id="editMedicineNote" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
                     <button onclick="closeEditModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-medium transition-colors duration-200">
@@ -3511,19 +3511,24 @@
                 usages.forEach((u, i) => {
                     const label = document.createElement('label');
                     label.className = 'flex items-center gap-1 text-sm cursor-pointer bg-blue-50 border border-blue-200 rounded px-2 py-1';
-                    label.innerHTML = `<input type="checkbox" class="usage-cb" value="${u}" onchange="applyUsageToNote()"> ${u}`;
+                    label.innerHTML = `<input type="checkbox" class="usage-cb" value="${u}" onchange="applyUsageToNote(this)"> ${u}`;
                     container.appendChild(label);
                 });
             } catch(e) { console.error('loadMedicineUsages:', e); }
         }
 
-        function applyUsageToNote() {
-            const checked = Array.from(document.querySelectorAll('.usage-cb:checked')).map(cb => cb.value);
-            const noteEl  = document.getElementById('editMedicineNote');
-            const current = noteEl.value;
-            noteEl.value  = checked.length
-                ? checked.join('\n') + (current ? '\n' + current : '')
-                : current;
+        function applyUsageToNote(cb) {
+            const noteEl = document.getElementById('editMedicineNote');
+            const usage  = cb.value;
+            if (cb.checked) {
+                noteEl.value = usage + (noteEl.value ? '\n' + noteEl.value : '');
+            } else {
+                const lines = noteEl.value.split('\n');
+                if (lines[0] === usage) {
+                    lines.shift();
+                    noteEl.value = lines.join('\n');
+                }
+            }
         }
 
         function editMedicine(index) {
@@ -3568,7 +3573,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${medicine.quantity}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${medicine.unit}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${medicine.note || '-'}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">${(medicine.note || '-').replace(/\n/g, '<br/>')}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button onclick="editMedicine(${index})" class="text-indigo-600 hover:text-indigo-900 mr-3 transition-colors duration-200">✏️ แก้ไข</button>
                                 <button onclick="deleteMedicine(${index})" class="text-red-600 hover:text-red-900 transition-colors duration-200">🗑️ ลบ</button>
