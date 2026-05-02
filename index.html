@@ -5666,7 +5666,7 @@
                 txSnap.forEach(doc => {
                     const d = doc.data();
                     const createdDate = d.createDate ? d.createDate.toDate() : null;
-                    rows.push({ createdDate, quantity: d.qty, unit: medicine.unit, rowType: 'receive' });
+                    rows.push({ createdDate, quantity: d.qty, unit: medicine.unit, rowType: d.type || 'receive', subType: d.subType });
                 });
 
                 rows.sort((a, b) => (b.createdDate || 0) - (a.createdDate || 0));
@@ -5829,9 +5829,10 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex justify-end space-x-2">
-                        <button onclick="openReceiveMedicineModal('${medicine.id}')" class="text-green-600 hover:text-green-700" title="รับยา">
+                        <button onclick="openReceiveMedicineModal('${medicine.id}')" class="text-green-600 hover:text-green-700" title="รับยา/จ่ายยา">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v9m6-6H6" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 18H6" />
                           </svg>
                         </button>
                     <button onclick="openTransactionModal('${medicine.id}')" class="text-primary hover:text-primary/80" title="รายการเคลื่อนไหว">
