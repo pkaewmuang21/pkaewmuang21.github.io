@@ -125,30 +125,34 @@
           const rows = results.data;
           document.getElementById('output').textContent = `กำลังนำเข้า ${col} ${rows.length} รายการ...`;
 
-          let success = 0, failed = 0, autoId = 0;
+          const normalizeKey = k => {
+            let s = k.trim();
+            while (s.length > 0 && s.charCodeAt(0) === 0xFEFF) s = s.slice(1);
+            return s.trim();
+          };
+
+          let success = 0, skipped = 0, failed = 0;
           for (const row of rows) {
-            // normalize row keys ป้องกัน BOM/whitespace ใน header
             const cleanRow = {};
             for (const k of Object.keys(row)) {
-              cleanRow[k.trim().replace(/^﻿/, '')] = row[k];
+              cleanRow[normalizeKey(k)] = (row[k] || '').toString().trim();
             }
-            const keyValue = (cleanRow[key] || '').toString().trim();
+            const keyValue = cleanRow[key] || '';
+            if (!keyValue) {
+              skipped++;
+              continue;
+            }
             try {
-              if (keyValue) {
-                await db.collection(col).doc(keyValue).set(row, { merge: true });
-              } else {
-                await db.collection(col).add(row);
-                autoId++;
-              }
+              await db.collection(col).doc(keyValue).set(cleanRow, { merge: true });
               success++;
             } catch (error) {
               console.error(`เกิดข้อผิดพลาด ${key}=${keyValue}:`, error);
               failed++;
             }
           }
-          const autoMsg = autoId > 0 ? `, auto ID ${autoId} รายการ` : '';
+          const skipMsg = skipped > 0 ? `, ข้าม ${skipped} รายการ (ไม่มี ${key})` : '';
           document.getElementById('output').textContent =
-            `เสร็จสิ้น [${col}]: สำเร็จ ${success} รายการ${autoMsg}, ผิดพลาด ${failed} รายการ`;
+            `เสร็จสิ้น [${col}]: อัปเดต ${success} รายการ${skipMsg}, ผิดพลาด ${failed} รายการ`;
         }
       });
     }
