@@ -832,7 +832,7 @@
     <!-- Receive Medicine Modal -->
     <div id="receiveMedicineModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 modal slide-in">
-            <div class="bg-green-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+            <div id="receiveMedicineHeader" class="bg-green-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
                 <h3 id="receiveMedicineTitle" class="text-lg font-medium">รับยาเข้าคลัง</h3>
                 <button onclick="document.getElementById('receiveMedicineModal').classList.add('hidden')" class="text-white hover:text-gray-200 focus:outline-none">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -843,18 +843,37 @@
             <div class="p-6">
                 <input type="hidden" id="receiveMedicineId">
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">จำนวนที่รับ <span class="text-danger">*</span></label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ประเภท <span class="text-danger">*</span></label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="txCriteria" value="receive" checked onchange="onTxCriteriaChange()">
+                            <span class="text-sm">รับยา</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="txCriteria" value="dispense" onchange="onTxCriteriaChange()">
+                            <span class="text-sm">จ่ายยา</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">รายละเอียด <span class="text-danger">*</span></label>
+                    <select id="txSubType" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="Receive">Receive</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">จำนวน <span class="text-danger">*</span></label>
                     <input type="number" id="receiveQty" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
                 </div>
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">วันที่รับ <span class="text-danger">*</span></label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">วันที่ <span class="text-danger">*</span></label>
                     <input type="date" id="receiveDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
                 </div>
                 <div class="flex justify-end space-x-3">
                     <button onclick="document.getElementById('receiveMedicineModal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
                         ยกเลิก
                     </button>
-                    <button onclick="saveReceiveMedicine()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    <button id="saveTxBtn" onclick="saveReceiveMedicine()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
                         บันทึก
                     </button>
                 </div>
@@ -5512,14 +5531,41 @@
                 statusClass: "bg-green-100 text-green-800"
             }
         ];
+        function onTxCriteriaChange() {
+            const criteria = document.querySelector('input[name="txCriteria"]:checked').value;
+            const subTypeEl = document.getElementById('txSubType');
+            const headerEl = document.getElementById('receiveMedicineHeader');
+            const titleEl = document.getElementById('receiveMedicineTitle');
+            const saveBtnEl = document.getElementById('saveTxBtn');
+            const medicine = medicinesInv.find(m => m.id === document.getElementById('receiveMedicineId').value);
+            const name = medicine ? medicine.name : '';
+
+            if (criteria === 'receive') {
+                subTypeEl.innerHTML = '<option value="Receive">Receive</option>';
+                headerEl.className = 'bg-green-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center';
+                saveBtnEl.className = 'px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700';
+                titleEl.textContent = 'รับยาเข้าคลัง' + (name ? ': ' + name : '');
+            } else {
+                subTypeEl.innerHTML = `
+                    <option value="Expire">Expire</option>
+                    <option value="Distribute to Other site">Distribute to Other site</option>
+                    <option value="Internal Supplies Requisition">Internal Supplies Requisition</option>`;
+                headerEl.className = 'bg-red-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center';
+                saveBtnEl.className = 'px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700';
+                titleEl.textContent = 'จ่ายยา' + (name ? ': ' + name : '');
+            }
+        }
+
         function openReceiveMedicineModal(medicineId) {
             const medicine = medicinesInv.find(m => m.id === medicineId);
             if (!medicine) return;
             document.getElementById('receiveMedicineId').value = medicineId;
-            document.getElementById('receiveMedicineTitle').textContent = 'รับยาเข้าคลัง: ' + medicine.name;
             document.getElementById('receiveQty').value = '';
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('receiveDate').value = today;
+            // reset to receive
+            document.querySelector('input[name="txCriteria"][value="receive"]').checked = true;
+            onTxCriteriaChange();
             document.getElementById('receiveMedicineModal').classList.remove('hidden');
         }
 
@@ -5527,6 +5573,8 @@
             const medicineId = document.getElementById('receiveMedicineId').value;
             const qty = parseInt(document.getElementById('receiveQty').value);
             const receiveDate = document.getElementById('receiveDate').value;
+            const criteria = document.querySelector('input[name="txCriteria"]:checked').value;
+            const subType = document.getElementById('txSubType').value;
 
             if (!qty || qty <= 0 || !receiveDate) {
                 showNotification('error', 'ข้อผิดพลาด', 'กรุณากรอกข้อมูลให้ครบถ้วน');
@@ -5538,16 +5586,19 @@
                 const medicineRef = db.collection('medicine').doc(medicineId);
                 const medicineSnap = await medicineRef.get();
                 const currentQty = parseInt(medicineSnap.data().qty) || 0;
+                const isReceive = criteria === 'receive';
+                const newQty = isReceive ? currentQty + qty : currentQty - qty;
 
                 await medicineRef.collection('transactions').add({
                     createdBy: userDb.data().name,
                     createDate: firebase.firestore.Timestamp.fromDate(new Date(receiveDate)),
-                    qty: qty,
-                    type: 'receive'
+                    qty: isReceive ? qty : -qty,
+                    type: criteria,
+                    subType: subType
                 });
 
                 await medicineRef.update({
-                    qty: currentQty + qty,
+                    qty: newQty,
                     updateDate: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
@@ -5555,7 +5606,7 @@
                 opdCardCache = null;
                 await medicalInventory();
                 hideLoading();
-                showNotification('success', 'สำเร็จ', 'บันทึกการรับยาสำเร็จ');
+                showNotification('success', 'สำเร็จ', isReceive ? 'บันทึกการรับยาสำเร็จ' : 'บันทึกการจ่ายยาสำเร็จ');
             } catch (e) {
                 console.error(e);
                 hideLoading();
