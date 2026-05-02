@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSV to Firestore</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+</head>
+<body>
+
+  <h2>Import CSV to Firestore</h2>
+
+  <div>
+    <span id="userInfo">ยังไม่ได้เข้าสู่ระบบ</span>
+    <button id="loginBtn" onclick="login()">เข้าสู่ระบบด้วย Google</button>
+    <button id="logoutBtn" onclick="logout()" style="display:none">ออกจากระบบ</button>
+  </div>
+
+  <div id="importSection" style="display:none; margin-top:16px">
+    <div>
+      <input type="file" id="csvFile" accept=".csv">
+      <button onclick="importCsv()">Import CSV</button>
+    </div>
+    <div style="margin-top:8px">
+      <button onclick="exportCsv()">Export CSV</button>
+    </div>
+  </div>
+
+  <pre id="output"></pre>
+
+  <script>
+    // ✅ กำหนดค่า Firebase ของคุณ
+      const firebaseConfig = {
+          apiKey: "AIzaSyC5WWSxG9iLQMZqO057qZ-Q4EA19d3Q1eE",
+          authDomain: "pg-firstaid.firebaseapp.com",
+          projectId: "pg-firstaid"
+      };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('userInfo').textContent = `เข้าสู่ระบบแล้ว: ${user.displayName} (${user.email})`;
+        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('logoutBtn').style.display = 'inline-block';
+        document.getElementById('importSection').style.display = 'block';
+      } else {
+        document.getElementById('userInfo').textContent = 'ยังไม่ได้เข้าสู่ระบบ';
+        document.getElementById('loginBtn').style.display = 'inline-block';
+        document.getElementById('logoutBtn').style.display = 'none';
+        document.getElementById('importSection').style.display = 'none';
+      }
+    });
+
+    function login() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(err => {
+        alert('เข้าสู่ระบบล้มเหลว: ' + err.message);
+      });
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+
+    async function exportCsv() {
+      document.getElementById('output').textContent = 'กำลัง export...';
+      try {
+        const snapshot = await db.collection("ICD10").get();
+        if (snapshot.empty) {
+          document.getElementById('output').textContent = 'ไม่มีข้อมูลใน collection';
+          return;
+        }
+        const rows = snapshot.docs.map(doc => doc.data());
+        const csv = Papa.unparse(rows);
+        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ICD10_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById('output').textContent = `Export สำเร็จ ${rows.length} รายการ`;
+      } catch (error) {
+        document.getElementById('output').textContent = 'Export ล้มเหลว: ' + error.message;
+      }
+    }
+
+    function importCsv() {
+      const fileInput = document.getElementById('csvFile');
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("กรุณาเลือกไฟล์ CSV");
+        return;
+      }
+
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async function(results) {
+          const rows = results.data;
+          document.getElementById('output').textContent = `กำลังนำเข้า ${rows.length} รายการ...`;
+
+          let success = 0, failed = 0;
+          for (const row of rows) {
+            const code = row.code;
+            if (!code) {
+              console.warn('ข้ามแถวที่ไม่มี code:', row);
+              failed++;
+              continue;
+            }
+            try {
+              await db.collection("ICD10").doc(code).set(row, { merge: true });
+              success++;
+            } catch (error) {
+              console.error(`เกิดข้อผิดพลาด code=${code}:`, error);
+              failed++;
+            }
+          }
+          document.getElementById('output').textContent =
+            `เสร็จสิ้น: สำเร็จ ${success} รายการ, ผิดพลาด ${failed} รายการ`;
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
