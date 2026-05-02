@@ -916,6 +916,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หน่วย</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภท</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รายละเอียด</th>
                             </tr>
                         </thead>
                         <tbody id="transactionHistoryTableBody" class="bg-white divide-y divide-gray-200">
@@ -5684,6 +5685,9 @@
                     const typeBadge = row.rowType === 'receive'
                         ? '<span class="category-badge bg-green-100 text-green-800">รับ</span>'
                         : '<span class="category-badge category-emergency">จ่าย</span>';
+                    const subTypeStr = row.subType !== undefined
+                        ? (row.subType || '-')
+                        : 'Dispensing medication to the patient';
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-gray-50';
                     tr.innerHTML = `
@@ -5691,6 +5695,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.quantity ?? '-'}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${row.unit || '-'}</td>
                         <td class="px-6 py-4 whitespace-nowrap">${typeBadge}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${subTypeStr}</td>
                     `;
                     tableBody.appendChild(tr);
                 });
