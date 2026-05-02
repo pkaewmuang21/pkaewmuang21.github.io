@@ -3941,7 +3941,10 @@
                 const icd10Snap = await db.collection('ICD10').get();
                 icd10Snap.forEach(doc => {
                     const d = doc.data();
-                    icd10Map[d.code || doc.id] = d.disease_system || '';
+                    const sys = d.disease_system || '';
+                    if (d.code) icd10Map[d.code] = sys;
+                    if (d.short_description) icd10Map[d.short_description] = sys;
+                    icd10Map[doc.id] = sys;
                 });
             } else if (mode == 'medicine') {
                 h1 = 'รายงานตามการใช้ยา';
