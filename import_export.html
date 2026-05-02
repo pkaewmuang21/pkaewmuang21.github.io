@@ -120,28 +120,30 @@
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
+        transformHeader: h => h.trim().replace(/^﻿/, ''),
         complete: async function(results) {
           const rows = results.data;
           document.getElementById('output').textContent = `กำลังนำเข้า ${col} ${rows.length} รายการ...`;
 
-          let success = 0, failed = 0;
+          let success = 0, failed = 0, autoId = 0;
           for (const row of rows) {
-            const keyValue = row[key];
-            if (!keyValue) {
-              console.warn(`ข้ามแถวที่ไม่มี ${key}:`, row);
-              failed++;
-              continue;
-            }
+            const keyValue = (row[key] || '').toString().trim();
             try {
-              await db.collection(col).doc(keyValue).set(row, { merge: true });
+              if (keyValue) {
+                await db.collection(col).doc(keyValue).set(row, { merge: true });
+              } else {
+                await db.collection(col).add(row);
+                autoId++;
+              }
               success++;
             } catch (error) {
               console.error(`เกิดข้อผิดพลาด ${key}=${keyValue}:`, error);
               failed++;
             }
           }
+          const autoMsg = autoId > 0 ? `, auto ID ${autoId} รายการ` : '';
           document.getElementById('output').textContent =
-            `เสร็จสิ้น [${col}]: สำเร็จ ${success} รายการ, ผิดพลาด ${failed} รายการ`;
+            `เสร็จสิ้น [${col}]: สำเร็จ ${success} รายการ${autoMsg}, ผิดพลาด ${failed} รายการ`;
         }
       });
     }
