@@ -4005,11 +4005,13 @@
                                 </table>
                             </div>
                         </div>
+                        <div class="flex items-center justify-center">
+                            <canvas id="donutChart" style="max-height:300px"></canvas>
+                        </div>
                     </div>
                       `;
             reportResults.innerHTML = html;
-            // Create chart
-            //createChart('pie', h3, chartLabels, chartData, chartColors);
+            createDonutChart(h3, chartLabels, chartData, chartColors);
         }
         // Generate Service Type Report
         //function generateServiceTypeReport(records, startDate, endDate) {
@@ -4101,11 +4103,13 @@
                                 </table>
                             </div>
                         </div>
+                        <div class="flex items-center justify-center">
+                            <canvas id="donutChart" style="max-height:300px"></canvas>
+                        </div>
                     </div>
                       `;
             reportResults.innerHTML = html;
-            // Create chart
-            //createChart('pie', 'สัดส่วนประเภทการให้บริการ', chartLabels, chartData, chartColors);
+            createDonutChart('สัดส่วนประเภทการให้บริการ', chartLabels, chartData, chartColors);
         }
         // Generate Department Report
         function generateDepartmentReport(records, startDate, endDate) {
@@ -4310,6 +4314,54 @@
             };
             myChart = new Chart(ctx, chartConfig);
         }
+        let donutChart;
+        function createDonutChart(title, labels, data, colors = null) {
+            if (donutChart) {
+                donutChart.destroy();
+            }
+            const canvas = document.getElementById('donutChart');
+            if (!canvas) return;
+            const chartColors = colors || [
+                'rgba(54, 162, 235, 0.8)', 'rgba(75, 192, 192, 0.8)',
+                'rgba(255, 206, 86, 0.8)', 'rgba(255, 99, 132, 0.8)',
+                'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)',
+                'rgba(201, 203, 207, 0.8)'
+            ];
+            donutChart = new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: chartColors,
+                        borderColor: chartColors.map(c => c.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: {
+                            display: true,
+                            text: title,
+                            font: { size: 14 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = total > 0 ? (ctx.parsed / total * 100).toFixed(1) : 0;
+                                    return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         // Show Notification
         function showNotification(type, title, message) {
             notificationTitle.textContent = title;
