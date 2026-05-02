@@ -4519,7 +4519,7 @@
                     ctx.setLineDash([]);
                     // label: ชื่อบน, % ล่าง
                     const tx = x3 + (isRight ? 4 : -4);
-                    const ty = y2 + 8;
+                    const ty = y2 + 16;
                     ctx.textAlign = isRight ? 'left' : 'right';
                     ctx.textBaseline = 'bottom';
                     ctx.font = 'bold 10px Prompt, sans-serif';
@@ -4585,10 +4585,10 @@
                     maintainAspectRatio: true,
                     aspectRatio: 1,
                     cutout: '60%',
-                    layout: { padding: { top: 20, bottom: 70, left: 70, right: 70 } },
+                    layout: { padding: { top: 5, bottom: 70, left: 70, right: 70 } },
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
-                        title: { display: true, text: title, font: { size: 14 } },
+                        title: { display: true, text: title, font: { size: 14 }, padding: { top: 0, bottom: 2 } },
                         tooltip: {
                             callbacks: {
                                 label: (ctx) => {
