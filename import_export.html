@@ -127,7 +127,12 @@
 
           let success = 0, failed = 0, autoId = 0;
           for (const row of rows) {
-            const keyValue = (row[key] || '').toString().trim();
+            // normalize row keys ป้องกัน BOM/whitespace ใน header
+            const cleanRow = {};
+            for (const k of Object.keys(row)) {
+              cleanRow[k.trim().replace(/^﻿/, '')] = row[k];
+            }
+            const keyValue = (cleanRow[key] || '').toString().trim();
             try {
               if (keyValue) {
                 await db.collection(col).doc(keyValue).set(row, { merge: true });
