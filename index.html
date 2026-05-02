@@ -909,8 +909,8 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อยา</label>
                         <!--
-                        <input type="text" id="editMedicineName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        -->
+            <input type="text" id="editMedicineName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            -->
                         <select id="editMedicineName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </select>
                     </div>
@@ -940,6 +940,10 @@
                             <option value="กล่อง">กล่อง</option>
                         </select>
                     </div>
+                </div>
+                <div class="mt-4" id="usageSection" style="display:none">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">วิธีใช้</label>
+                    <div id="medicineUsageCheckboxes" class="flex flex-wrap gap-2"></div>
                 </div>
                 <div class="mt-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
@@ -2343,7 +2347,11 @@
 
             }
 
-
+            // reset note และโหลด usage ใหม่เมื่อเปลี่ยนชื่อยา
+            const noteEl = document.getElementById('editMedicineNote');
+            noteEl.value = '';
+            noteEl.dataset.originalNote = '';
+            loadMedicineUsages(nameSelect.value);
         });
         function googleLogin() {
             var provider = new firebase.auth.GoogleAuthProvider();
@@ -3467,6 +3475,12 @@
                     ...uniqueNames.map(n => ({ value: n, label: n }))],
                 'value', 'label', true
             );
+
+            // reset usage section
+            document.getElementById('medicineUsageCheckboxes').innerHTML = '';
+            document.getElementById('usageSection').style.display = 'none';
+            const noteEl = document.getElementById('editMedicineNote');
+            noteEl.dataset.originalNote = '';
         }
         function addMedicine() {
             document.getElementById('editMedicineName').value = '';
@@ -3479,6 +3493,39 @@
 
             clearMed();
         }
+        async function loadMedicineUsages(name) {
+            const container = document.getElementById('medicineUsageCheckboxes');
+            const section   = document.getElementById('usageSection');
+            container.innerHTML = '';
+            section.style.display = 'none';
+            if (!name) return;
+            try {
+                const snap = await db.collection('medicine').where('name', '==', name).get();
+                if (snap.empty) return;
+                const data = snap.docs[0].data();
+                const usages = Array.isArray(data.usage)
+                    ? data.usage
+                    : (data.usage ? [data.usage] : []);
+                if (!usages.length) return;
+                section.style.display = 'block';
+                usages.forEach((u, i) => {
+                    const label = document.createElement('label');
+                    label.className = 'flex items-center gap-1 text-sm cursor-pointer bg-blue-50 border border-blue-200 rounded px-2 py-1';
+                    label.innerHTML = `<input type="checkbox" class="usage-cb" value="${u}" onchange="applyUsageToNote()"> ${u}`;
+                    container.appendChild(label);
+                });
+            } catch(e) { console.error('loadMedicineUsages:', e); }
+        }
+
+        function applyUsageToNote() {
+            const checked = Array.from(document.querySelectorAll('.usage-cb:checked')).map(cb => cb.value);
+            const noteEl  = document.getElementById('editMedicineNote');
+            const orig    = noteEl.dataset.originalNote || '';
+            noteEl.value  = checked.length
+                ? checked.join('<br/>') + (orig ? '<br/>' + orig : '')
+                : orig;
+        }
+
         function editMedicine(index) {
 
             editingIndex = index;
@@ -3487,13 +3534,16 @@
             clearMed();
 
             nameChoices.setChoiceByValue(medicine.name);
-            //document.getElementById('editMedicineName').value = medicine.name;
             document.getElementById('editMedicineType').value = medicine.type;
             document.getElementById('editMedicineQuantity').value = medicine.quantity;
             document.getElementById('editMedicineUnit').value = medicine.unit;
-            document.getElementById('editMedicineNote').value = medicine.note || '';
+            const note = medicine.note || '';
+            const noteEl = document.getElementById('editMedicineNote');
+            noteEl.value = note;
+            noteEl.dataset.originalNote = note;
 
             document.getElementById('editModal').classList.remove('hidden');
+            loadMedicineUsages(medicine.name);
         }
         function renderTable() {
             const tbody = document.getElementById('medicineTableBody');
