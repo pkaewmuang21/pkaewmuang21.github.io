@@ -4569,7 +4569,7 @@
                     : 'rgba(180,180,180,0.8)'
             );
 
-            const legendPaddingPlugin = {
+            /*const legendPaddingPlugin = {
                 id: 'legendPadding',
                 beforeInit(chart) {
                     const originalFit = chart.legend.fit;
@@ -4578,7 +4578,7 @@
                         this.height += 40; // ปรับตัวเลขนี้
                     }
                 }
-            };
+            };*/
 
 
             donutChart = new Chart(canvas.getContext('2d'), {
@@ -4599,7 +4599,7 @@
                     cutout: '60%',
                     layout: { padding: { top: 55, bottom: 90, left: 70, right: 70 } },
                     plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } }, padding: 40 },
                         title: { display: true, text: title, font: { size: 14 }, padding: { top: 0, bottom: 40 } },
                         tooltip: {
                             callbacks: {
@@ -4612,7 +4612,7 @@
                         }
                     }
                 }
-                ,plugins: [legendPaddingPlugin]  // ใส่ตรงนี้
+                //,plugins: [legendPaddingPlugin]  // ใส่ตรงนี้
             });
         }
 
