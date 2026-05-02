@@ -4394,6 +4394,53 @@
             'rgba(220,180,80,0.8)'
         ];
 
+        // plugin วาด leader lines + % บน donut chart ทุกอัน
+        const leaderLinePlugin = {
+            id: 'leaderLines',
+            afterDraw(chart) {
+                if (chart.config.type !== 'doughnut') return;
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data.length) return;
+                const ctx = chart.ctx;
+                const dataset = chart.data.datasets[0];
+                const total = dataset.data.reduce((a, b) => a + b, 0);
+                if (!total) return;
+                const cx = meta.data[0].x;
+                const cy = meta.data[0].y;
+                ctx.save();
+                meta.data.forEach((arc, i) => {
+                    const value = dataset.data[i];
+                    const pct = value / total * 100;
+                    if (pct < 2) return;
+                    const midAngle = (arc.startAngle + arc.endAngle) / 2;
+                    const outerR = arc.outerRadius;
+                    const cos = Math.cos(midAngle);
+                    const sin = Math.sin(midAngle);
+                    const isRight = cos >= 0;
+                    const x1 = cx + cos * (outerR + 2);
+                    const y1 = cy + sin * (outerR + 2);
+                    const x2 = cx + cos * (outerR + 16);
+                    const y2 = cy + sin * (outerR + 16);
+                    const x3 = x2 + (isRight ? 16 : -16);
+                    const color = dataset.backgroundColor[i] || '#999';
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.lineTo(x3, y2);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    ctx.fillStyle = '#374151';
+                    ctx.font = '10px Prompt, sans-serif';
+                    ctx.textAlign = isRight ? 'left' : 'right';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`${pct.toFixed(1)}%`, x3 + (isRight ? 3 : -3), y2);
+                });
+                ctx.restore();
+            }
+        };
+        Chart.register(leaderLinePlugin);
+
         function redrawDonut() {
             if (!lastDonutData) return;
             createDonutChart(lastDonutData.title, lastDonutData.labels, lastDonutData.data);
@@ -4408,7 +4455,6 @@
             const topNEl = document.getElementById('topNSelect');
             const topN = topNEl ? parseInt(topNEl.value) : 10;
 
-            // sort descending
             const combined = labels.map((l, i) => ({ label: l, value: data[i] }))
                                    .sort((a, b) => b.value - a.value);
 
@@ -4443,6 +4489,8 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
+                    cutout: '60%',
+                    layout: { padding: 45 },
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
                         title: { display: true, text: title, font: { size: 14 } },
