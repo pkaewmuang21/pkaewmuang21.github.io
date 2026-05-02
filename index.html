@@ -890,7 +890,7 @@
 
     <!-- Transaction History Modal -->
     <div id="transactionHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 modal slide-in">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 modal slide-in">
             <div class="bg-primary text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
                 <h3 id="transactionModalTitle" class="text-lg font-medium">รายการเคลื่อนไหว</h3>
                 <button onclick="document.getElementById('transactionHistoryModal').classList.add('hidden')" class="text-white hover:text-gray-200 focus:outline-none">
@@ -4519,15 +4519,16 @@
                     ctx.setLineDash([]);
                     // label: ชื่อบน, % ล่าง
                     const tx = x3 + (isRight ? 4 : -4);
+                    const ty = y2 + 8;
                     ctx.textAlign = isRight ? 'left' : 'right';
                     ctx.textBaseline = 'bottom';
                     ctx.font = 'bold 10px Prompt, sans-serif';
                     ctx.fillStyle = '#374151';
-                    ctx.fillText(shortLabel, tx, y2);
+                    ctx.fillText(shortLabel, tx, ty);
                     ctx.textBaseline = 'top';
                     ctx.font = '10px Prompt, sans-serif';
                     ctx.fillStyle = color.replace('0.8', '1');
-                    ctx.fillText(`${pct.toFixed(1)}%`, tx, y2 + 1);
+                    ctx.fillText(`${pct.toFixed(1)}%`, tx, ty + 1);
                 });
                 ctx.restore();
             }
@@ -4584,7 +4585,7 @@
                     maintainAspectRatio: true,
                     aspectRatio: 1,
                     cutout: '60%',
-                    layout: { padding: 70 },
+                    layout: { padding: { top: 20, bottom: 70, left: 70, right: 70 } },
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
                         title: { display: true, text: title, font: { size: 14 } },
