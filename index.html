@@ -3520,10 +3520,10 @@
         function applyUsageToNote() {
             const checked = Array.from(document.querySelectorAll('.usage-cb:checked')).map(cb => cb.value);
             const noteEl  = document.getElementById('editMedicineNote');
-            const orig    = noteEl.dataset.originalNote || '';
+            const current = noteEl.value;
             noteEl.value  = checked.length
-                ? checked.join('<br/>') + (orig ? '<br/>' + orig : '')
-                : orig;
+                ? checked.join('\n') + (current ? '\n' + current : '')
+                : current;
         }
 
         function editMedicine(index) {
