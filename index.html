@@ -4005,7 +4005,16 @@
                                 </table>
                             </div>
                         </div>
-                        <div class="flex items-center justify-center">
+                        <div class="flex flex-col items-center">
+                            <div class="mb-2 text-sm text-gray-600">
+                                แสดง Top
+                                <select id="topNSelect" class="border rounded px-1 py-0.5 text-sm" onchange="redrawDonut()">
+                                    <option value="5">5</option>
+                                    <option value="10" selected>10</option>
+                                    <option value="20">20</option>
+                                    <option value="0">ทั้งหมด</option>
+                                </select>
+                            </div>
                             <canvas id="donutChart" style="max-height:300px"></canvas>
                         </div>
                     </div>
@@ -4103,7 +4112,16 @@
                                 </table>
                             </div>
                         </div>
-                        <div class="flex items-center justify-center">
+                        <div class="flex flex-col items-center">
+                            <div class="mb-2 text-sm text-gray-600">
+                                แสดง Top
+                                <select id="topNSelect" class="border rounded px-1 py-0.5 text-sm" onchange="redrawDonut()">
+                                    <option value="5">5</option>
+                                    <option value="10" selected>10</option>
+                                    <option value="20">20</option>
+                                    <option value="0">ทั้งหมด</option>
+                                </select>
+                            </div>
                             <canvas id="donutChart" style="max-height:300px"></canvas>
                         </div>
                     </div>
@@ -4315,24 +4333,55 @@
             myChart = new Chart(ctx, chartConfig);
         }
         let donutChart;
-        function createDonutChart(title, labels, data, colors = null) {
-            if (donutChart) {
-                donutChart.destroy();
-            }
+        let lastDonutData = null;
+        const baseColors = [
+            'rgba(54,162,235,0.8)','rgba(75,192,192,0.8)','rgba(255,206,86,0.8)',
+            'rgba(255,99,132,0.8)','rgba(153,102,255,0.8)','rgba(255,159,64,0.8)',
+            'rgba(99,200,132,0.8)','rgba(255,130,180,0.8)','rgba(100,180,255,0.8)',
+            'rgba(220,180,80,0.8)'
+        ];
+
+        function redrawDonut() {
+            if (!lastDonutData) return;
+            createDonutChart(lastDonutData.title, lastDonutData.labels, lastDonutData.data);
+        }
+
+        function createDonutChart(title, labels, data) {
+            lastDonutData = { title, labels, data };
+            if (donutChart) donutChart.destroy();
             const canvas = document.getElementById('donutChart');
             if (!canvas) return;
-            const chartColors = colors || [
-                'rgba(54, 162, 235, 0.8)', 'rgba(75, 192, 192, 0.8)',
-                'rgba(255, 206, 86, 0.8)', 'rgba(255, 99, 132, 0.8)',
-                'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)',
-                'rgba(201, 203, 207, 0.8)'
-            ];
+
+            const topNEl = document.getElementById('topNSelect');
+            const topN = topNEl ? parseInt(topNEl.value) : 10;
+
+            // sort descending
+            const combined = labels.map((l, i) => ({ label: l, value: data[i] }))
+                                   .sort((a, b) => b.value - a.value);
+
+            let finalLabels, finalData;
+            if (topN > 0 && combined.length > topN) {
+                const top = combined.slice(0, topN);
+                const othersSum = combined.slice(topN).reduce((s, x) => s + x.value, 0);
+                finalLabels = [...top.map(x => x.label), 'อื่นๆ'];
+                finalData   = [...top.map(x => x.value), othersSum];
+            } else {
+                finalLabels = combined.map(x => x.label);
+                finalData   = combined.map(x => x.value);
+            }
+
+            const chartColors = finalLabels.map((_, i) =>
+                i < finalLabels.length - 1 || topN === 0 || combined.length <= topN
+                    ? baseColors[i % baseColors.length]
+                    : 'rgba(180,180,180,0.8)'
+            );
+
             donutChart = new Chart(canvas.getContext('2d'), {
                 type: 'doughnut',
                 data: {
-                    labels: labels,
+                    labels: finalLabels,
                     datasets: [{
-                        data: data,
+                        data: finalData,
                         backgroundColor: chartColors,
                         borderColor: chartColors.map(c => c.replace('0.8', '1')),
                         borderWidth: 1
@@ -4342,12 +4391,8 @@
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: { position: 'bottom' },
-                        title: {
-                            display: true,
-                            text: title,
-                            font: { size: 14 }
-                        },
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                        title: { display: true, text: title, font: { size: 14 } },
                         tooltip: {
                             callbacks: {
                                 label: (ctx) => {
