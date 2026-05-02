@@ -194,11 +194,15 @@
               continue;
             }
             try {
-              await db.collection(col).doc(keyValue).set(cleanRow, { merge: true });
+              await db.collection(col).doc(keyValue).update(cleanRow);
               success++;
             } catch (error) {
-              console.error(`เกิดข้อผิดพลาด ${key}=${keyValue}:`, error);
-              failed++;
+              if (error.code === 'not-found') {
+                skipped++;
+              } else {
+                console.error(`เกิดข้อผิดพลาด ${key}=${keyValue}:`, error);
+                failed++;
+              }
             }
           }
           const skipMsg = skipped > 0 ? `, ข้าม ${skipped} รายการ (ไม่มี ${key})` : '';
