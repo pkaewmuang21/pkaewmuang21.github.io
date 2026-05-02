@@ -4068,7 +4068,7 @@
                                     <option value="0">ทั้งหมด</option>
                                 </select>
                             </div>
-                            <canvas id="donutChart" style="width:100%;height:420px"></canvas>
+                            <canvas id="donutChart"></canvas>
                         </div>
                     </div>
                       `;
@@ -4175,7 +4175,7 @@
                                     <option value="0">ทั้งหมด</option>
                                 </select>
                             </div>
-                            <canvas id="donutChart" style="width:100%;height:420px"></canvas>
+                            <canvas id="donutChart"></canvas>
                         </div>
                     </div>
                       `;
@@ -4499,7 +4499,8 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1,
                     cutout: '60%',
                     layout: { padding: 70 },
                     plugins: {
