@@ -1387,6 +1387,7 @@
 
                 await getDiagnosis()
                 await getMedicineUnit()
+                await loadIcdMapping()
                 //loadMessages();
             } else {
                 //status.textContent = "Not logged in";
@@ -2210,6 +2211,7 @@
                 const option = document.createElement("option");
                 //option.value = doc.id;
                 option.value = data.short_description;
+                option.dataset.icdCode = data.code || '';
                 option.textContent = data.short_description || "(no name)";
                 select.appendChild(option);
             });
@@ -2218,6 +2220,12 @@
                 searchEnabled: true,
                 itemSelectText: '',
                 shouldSort: false
+            });
+
+            select.addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                const code = opt?.dataset?.icdCode;
+                suggestedMedicineType = (code && icdCategoryMap[code]) ? icdCategoryMap[code] : '';
             });
         }
         const typeSelect = document.getElementById("editMedicineType");
@@ -2229,6 +2237,22 @@
         var uniqueUnit = [];
 
         var nameChoices;
+
+        let icdCategoryMap = {};       // icd_10 code → category name
+        let suggestedMedicineType = ''; // set when diagnosis2 changes
+
+        async function loadIcdMapping() {
+            try {
+                const snapshot = await db.collection('medical_icd10_mapping').get();
+                icdCategoryMap = {};
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    (d.icd_10 || []).forEach(code => { icdCategoryMap[code] = d.category; });
+                });
+            } catch(e) {
+                console.error('loadIcdMapping failed:', e);
+            }
+        }
         async function getMedicineUnit() {
 
             typeSelect.innerHTML = "";
@@ -3519,6 +3543,11 @@
             document.getElementById('editModal').classList.remove('hidden');
 
             clearMed();
+
+            if (suggestedMedicineType) {
+                typeSelect.value = suggestedMedicineType;
+                typeSelect.dispatchEvent(new Event('change'));
+            }
         }
         async function loadMedicineUsages(name) {
             const container = document.getElementById('medicineUsageCheckboxes');
