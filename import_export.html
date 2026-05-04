@@ -1,91 +1,229 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-    <title>CSV to Firestore</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PG Firstaid – Import / Export</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; }
+    .badge { display:inline-block; padding:1px 6px; border-radius:9999px; font-size:11px; font-weight:600; }
+    pre#output { white-space: pre-wrap; word-break: break-word; }
+  </style>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen">
 
-  <h2>Import CSV to Firestore</h2>
+  <!-- Header -->
+  <header class="bg-blue-700 text-white shadow-md">
+    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold tracking-wide">PG Firstaid</h1>
+        <p class="text-blue-200 text-sm">Import / Export &amp; Database Management</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="userInfo" class="text-sm text-blue-100">ยังไม่ได้เข้าสู่ระบบ</span>
+        <button id="loginBtn" onclick="login()"
+          class="bg-white text-blue-700 text-sm font-semibold px-4 py-1.5 rounded-full hover:bg-blue-50 transition">
+          เข้าสู่ระบบ
+        </button>
+        <button id="logoutBtn" onclick="logout()" style="display:none"
+          class="bg-blue-600 text-white text-sm font-semibold px-4 py-1.5 rounded-full border border-blue-300 hover:bg-blue-500 transition">
+          ออกจากระบบ
+        </button>
+      </div>
+    </div>
+  </header>
 
-  <div>
-    <span id="userInfo">ยังไม่ได้เข้าสู่ระบบ</span>
-    <button id="loginBtn" onclick="login()">เข้าสู่ระบบด้วย Google</button>
-    <button id="logoutBtn" onclick="logout()" style="display:none">ออกจากระบบ</button>
-  </div>
+  <!-- Main -->
+  <main class="max-w-4xl mx-auto px-6 py-8 space-y-6">
 
-  <div id="importSection" style="display:none; margin-top:16px">
-    <div>
-      <label>Collection:
-        <select id="collectionSelect">
-          <option value="ICD10">ICD10 (key: code)</option>
-          <option value="medicine">medicine (key: name)</option>
-        </select>
-      </label>
+    <!-- Login prompt -->
+    <div id="loginPrompt" class="bg-white rounded-2xl shadow p-8 text-center text-gray-500">
+      <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+      </svg>
+      <p class="font-medium">กรุณาเข้าสู่ระบบด้วย Google เพื่อใช้งาน</p>
     </div>
-    <div style="margin-top:8px">
-      <input type="file" id="csvFile" accept=".csv">
-      <button onclick="checkCsv()">Check CSV</button>
-      <button onclick="importCsv()">Import CSV</button>
-    </div>
-    <div style="margin-top:8px">
-      <button onclick="exportCsv()">Export CSV</button>
-    </div>
-    <div style="margin-top:16px; border-top:1px solid #ccc; padding-top:12px">
-      Doc ID length &lt;
-      <input type="number" id="idLenThreshold" value="7" min="1" style="width:50px; border:1px solid #ccc; padding:2px 4px;">
-      <button onclick="previewDeleteByIdLen()">Preview</button>
-      <button onclick="deleteByIdLen()" style="color:white; background:#dc3545; border:none; padding:4px 10px; border-radius:4px; cursor:pointer">Delete</button>
-    </div>
-  </div>
 
-  <pre id="output"></pre>
+    <!-- Sections (shown after login) -->
+    <div id="mainSections" style="display:none" class="space-y-6">
+
+      <!-- ── Section 1: CSV Import / Export ── -->
+      <div class="bg-white rounded-2xl shadow overflow-hidden">
+        <div class="bg-indigo-50 border-b border-indigo-100 px-6 py-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <h2 class="font-semibold text-indigo-800 text-base">CSV Import / Export</h2>
+        </div>
+        <div class="px-6 py-5 space-y-4">
+
+          <!-- Collection selector -->
+          <div class="flex items-center gap-3 flex-wrap">
+            <label class="text-sm font-medium text-gray-600 w-24">Collection</label>
+            <select id="collectionSelect"
+              class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              <option value="ICD10">ICD10 (key: code)</option>
+              <option value="medicine">medicine (key: name)</option>
+            </select>
+          </div>
+
+          <!-- File + actions -->
+          <div class="flex items-center gap-3 flex-wrap">
+            <label class="text-sm font-medium text-gray-600 w-24">ไฟล์ CSV</label>
+            <input type="file" id="csvFile" accept=".csv"
+              class="text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0
+                     file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            <button onclick="checkCsv()"
+              class="text-sm px-4 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition">
+              ตรวจสอบ
+            </button>
+            <button onclick="importCsv()"
+              class="text-sm px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition">
+              Import
+            </button>
+            <button onclick="exportCsv()"
+              class="text-sm px-4 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
+              Export CSV
+            </button>
+          </div>
+
+          <!-- Delete by ID length -->
+          <div class="flex items-center gap-3 flex-wrap border-t border-gray-100 pt-4">
+            <label class="text-sm font-medium text-gray-600 w-24">ลบ Doc ID</label>
+            <span class="text-sm text-gray-500">ความยาว &lt;</span>
+            <input type="number" id="idLenThreshold" value="7" min="1"
+              class="w-16 border border-gray-300 rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <button onclick="previewDeleteByIdLen()"
+              class="text-sm px-4 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition">
+              Preview
+            </button>
+            <button onclick="deleteByIdLen()"
+              class="text-sm px-4 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">
+              ลบ
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section 2: Medical ICD10 Mapping ── -->
+      <div class="bg-white rounded-2xl shadow overflow-hidden">
+        <div class="bg-emerald-50 border-b border-emerald-100 px-6 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0
+                   01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <h2 class="font-semibold text-emerald-800 text-base">Medical ICD-10 Category Mapping</h2>
+          </div>
+          <span class="badge bg-emerald-100 text-emerald-700">Collection: medical_icd10_mapping</span>
+        </div>
+        <div class="px-6 py-5 space-y-4">
+
+          <!-- Info -->
+          <p class="text-sm text-gray-500">
+            บันทึก mapping ระหว่างหมวดยาและรหัส ICD-10 ลงใน Firestore collection
+            <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">medical_icd10_mapping</code>
+          </p>
+
+          <!-- Schema info -->
+          <div class="bg-gray-50 rounded-xl p-4 text-xs font-mono text-gray-600 space-y-1">
+            <p class="font-semibold text-gray-700 font-sans text-sm mb-2">Database Schema</p>
+            <p><span class="text-indigo-600">collection</span>: medical_icd10_mapping</p>
+            <p class="pl-4"><span class="text-emerald-600">doc id</span>: auto (Firestore)</p>
+            <p class="pl-4"><span class="text-purple-600">category</span>: string — ชื่อหมวดยา</p>
+            <p class="pl-4"><span class="text-purple-600">icd_10</span>: array&lt;string&gt; — รหัส ICD-10</p>
+            <p class="pl-4"><span class="text-purple-600">updatedAt</span>: Timestamp — วันที่อัปเดต</p>
+          </div>
+
+          <!-- Data preview -->
+          <div>
+            <p class="text-sm font-medium text-gray-700 mb-2">ข้อมูลที่จะบันทึก
+              <span id="mappingCount" class="badge bg-gray-200 text-gray-600 ml-1"></span>
+            </p>
+            <div id="mappingPreview" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-3 flex-wrap border-t border-gray-100 pt-4">
+            <button onclick="saveMappingToFirestore()"
+              class="px-5 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+              บันทึกลง Firestore
+            </button>
+            <button onclick="loadMappingFromFirestore()"
+              class="px-5 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50 transition flex items-center gap-2">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0
+                     0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              โหลดจาก Firestore
+            </button>
+            <button onclick="deleteMappingCollection()"
+              class="px-5 py-2 rounded-lg border border-red-200 text-red-600 text-sm hover:bg-red-50 transition">
+              ลบทั้งหมด
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Output log -->
+      <div class="bg-white rounded-2xl shadow overflow-hidden">
+        <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+          <h2 class="font-semibold text-gray-600 text-sm">Log</h2>
+          <button onclick="clearOutput()" class="text-xs text-gray-400 hover:text-gray-600 transition">ล้าง</button>
+        </div>
+        <pre id="output" class="px-6 py-4 text-sm text-gray-700 min-h-12 max-h-64 overflow-y-auto bg-white"></pre>
+      </div>
+
+    </div><!-- /mainSections -->
+  </main>
 
   <script>
-    // ✅ กำหนดค่า Firebase ของคุณ
-      const firebaseConfig = {
-          apiKey: "AIzaSyC5WWSxG9iLQMZqO057qZ-Q4EA19d3Q1eE",
-          authDomain: "pg-firstaid.firebaseapp.com",
-          projectId: "pg-firstaid"
-      };
-
+    // ── Firebase ──────────────────────────────────────────
+    const firebaseConfig = {
+      apiKey: "AIzaSyC5WWSxG9iLQMZqO057qZ-Q4EA19d3Q1eE",
+      authDomain: "pg-firstaid.firebaseapp.com",
+      projectId: "pg-firstaid"
+    };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const db   = firebase.firestore();
     const auth = firebase.auth();
 
     auth.onAuthStateChanged(user => {
       if (user) {
-        document.getElementById('userInfo').textContent = `เข้าสู่ระบบแล้ว: ${user.displayName} (${user.email})`;
-        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('userInfo').textContent = `${user.displayName} (${user.email})`;
+        document.getElementById('loginBtn').style.display  = 'none';
         document.getElementById('logoutBtn').style.display = 'inline-block';
-        document.getElementById('importSection').style.display = 'block';
+        document.getElementById('loginPrompt').style.display = 'none';
+        document.getElementById('mainSections').style.display = 'block';
       } else {
         document.getElementById('userInfo').textContent = 'ยังไม่ได้เข้าสู่ระบบ';
-        document.getElementById('loginBtn').style.display = 'inline-block';
+        document.getElementById('loginBtn').style.display  = 'inline-block';
         document.getElementById('logoutBtn').style.display = 'none';
-        document.getElementById('importSection').style.display = 'none';
+        document.getElementById('loginPrompt').style.display = 'block';
+        document.getElementById('mainSections').style.display = 'none';
       }
     });
 
-    function login() {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(err => {
-        alert('เข้าสู่ระบบล้มเหลว: ' + err.message);
-      });
-    }
+    function login()  { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => alert(e.message)); }
+    function logout() { auth.signOut(); }
+    function log(msg) { document.getElementById('output').textContent = msg; }
+    function clearOutput() { document.getElementById('output').textContent = ''; }
 
-    function logout() {
-      auth.signOut();
-    }
-
-    const collectionKeys = {
-      ICD10: 'code',
-      medicine: 'name'
-    };
-
+    // ── CSV helpers ───────────────────────────────────────
+    const collectionKeys = { ICD10: 'code', medicine: 'name' };
     function getSelected() {
       const col = document.getElementById('collectionSelect').value;
       return { col, key: collectionKeys[col] };
@@ -94,13 +232,9 @@
     function serializeRow(data) {
       const row = {};
       for (const [k, v] of Object.entries(data)) {
-        if (v && typeof v === 'object' && typeof v.toDate === 'function') {
-          row[k] = v.toDate().toISOString();
-        } else if (v && typeof v === 'object' && !Array.isArray(v)) {
-          row[k] = JSON.stringify(v);
-        } else {
-          row[k] = v;
-        }
+        if (v && typeof v === 'object' && typeof v.toDate === 'function') row[k] = v.toDate().toISOString();
+        else if (v && typeof v === 'object' && !Array.isArray(v)) row[k] = JSON.stringify(v);
+        else row[k] = v;
       }
       return row;
     }
@@ -111,15 +245,9 @@
       const out = {};
       for (const [k, v] of Object.entries(row)) {
         if (typeof v === 'string') {
-          const tsMatch = v.match(TS_RE);
-          if (tsMatch) {
-            out[k] = new firebase.firestore.Timestamp(parseInt(tsMatch[1]), parseInt(tsMatch[2]));
-            continue;
-          }
-          if (ISO_RE.test(v)) {
-            const d = new Date(v);
-            if (!isNaN(d)) { out[k] = firebase.firestore.Timestamp.fromDate(d); continue; }
-          }
+          const m = v.match(TS_RE);
+          if (m) { out[k] = new firebase.firestore.Timestamp(parseInt(m[1]), parseInt(m[2])); continue; }
+          if (ISO_RE.test(v)) { const d = new Date(v); if (!isNaN(d)) { out[k] = firebase.firestore.Timestamp.fromDate(d); continue; } }
         }
         out[k] = v;
       }
@@ -128,138 +256,166 @@
 
     async function exportCsv() {
       const { col } = getSelected();
-      document.getElementById('output').textContent = `กำลัง export ${col}...`;
-      try {
-        const snapshot = await db.collection(col).get();
-        if (snapshot.empty) {
-          document.getElementById('output').textContent = `ไม่มีข้อมูลใน ${col}`;
-          return;
-        }
-        const rows = snapshot.docs.map(doc => serializeRow(doc.data()));
-        const csv = Papa.unparse(rows);
-        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${col}_${new Date().toISOString().slice(0,10)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        document.getElementById('output').textContent = `Export ${col} สำเร็จ ${rows.length} รายการ`;
-      } catch (error) {
-        document.getElementById('output').textContent = 'Export ล้มเหลว: ' + error.message;
-      }
+      log(`กำลัง export ${col}...`);
+      const snapshot = await db.collection(col).get();
+      if (snapshot.empty) { log(`ไม่มีข้อมูลใน ${col}`); return; }
+      const rows = snapshot.docs.map(doc => serializeRow(doc.data()));
+      const csv  = Papa.unparse(rows);
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), { href: url, download: `${col}_${new Date().toISOString().slice(0,10)}.csv` });
+      a.click();
+      URL.revokeObjectURL(url);
+      log(`Export ${col} สำเร็จ ${rows.length} รายการ`);
     }
 
     async function getDocsToDelete() {
       const { col } = getSelected();
       const threshold = parseInt(document.getElementById('idLenThreshold').value) || 7;
-      const snapshot = await db.collection(col).get();
-      return snapshot.docs.filter(doc => doc.id.length < threshold);
+      return (await db.collection(col).get()).docs.filter(d => d.id.length < threshold);
     }
 
     async function previewDeleteByIdLen() {
-      const output = document.getElementById('output');
-      output.textContent = 'กำลังโหลด...';
-      const { col } = getSelected();
+      log('กำลังโหลด...');
       const threshold = parseInt(document.getElementById('idLenThreshold').value) || 7;
+      const { col } = getSelected();
       const docs = await getDocsToDelete();
-      if (docs.length === 0) {
-        output.textContent = `ไม่พบ doc ที่มี ID length < ${threshold} ใน ${col}`;
-        return;
-      }
-      output.textContent = `พบ ${docs.length} doc ที่ ID length < ${threshold}:\n` +
-        docs.map(d => `  ${d.id} (${d.id.length} chars)`).join('\n');
+      log(docs.length === 0
+        ? `ไม่พบ doc ที่มี ID length < ${threshold} ใน ${col}`
+        : `พบ ${docs.length} doc ที่ ID length < ${threshold}:\n` + docs.map(d => `  ${d.id} (${d.id.length} chars)`).join('\n'));
     }
 
     async function deleteByIdLen() {
       const { col } = getSelected();
       const threshold = parseInt(document.getElementById('idLenThreshold').value) || 7;
       const docs = await getDocsToDelete();
-      if (docs.length === 0) {
-        document.getElementById('output').textContent = 'ไม่พบ doc ที่ต้องลบ';
-        return;
-      }
+      if (!docs.length) { log('ไม่พบ doc ที่ต้องลบ'); return; }
       if (!confirm(`ยืนยันลบ ${docs.length} doc ที่มี ID length < ${threshold} ใน ${col}?`)) return;
-      const output = document.getElementById('output');
-      output.textContent = `กำลังลบ ${docs.length} doc...`;
+      log(`กำลังลบ ${docs.length} doc...`);
       let deleted = 0, failed = 0;
       for (const doc of docs) {
-        try {
-          await db.collection(col).doc(doc.id).delete();
-          deleted++;
-        } catch (e) {
-          console.error('ลบล้มเหลว:', doc.id, e);
-          failed++;
-        }
+        try { await db.collection(col).doc(doc.id).delete(); deleted++; }
+        catch(e) { console.error(e); failed++; }
       }
-      output.textContent = `ลบเสร็จ: ${deleted} doc, ผิดพลาด ${failed} doc`;
+      log(`ลบเสร็จ: ${deleted} doc, ผิดพลาด ${failed} doc`);
     }
 
     function checkCsv() {
       const file = document.getElementById('csvFile').files[0];
       if (!file) { alert('กรุณาเลือกไฟล์ CSV'); return; }
-      Papa.parse(file, {
-        header: true,
-        preview: 1,
-        complete: function(results) {
-          const rawKeys = Object.keys(results.data[0] || {});
-          const info = rawKeys.map(k => {
-            const codes = Array.from(k).map(c => c.charCodeAt(0));
-            return `"${k}" [${codes.join(',')}]`;
-          });
-          document.getElementById('output').textContent =
-            `Columns (${rawKeys.length}):\n` + info.join('\n');
-        }
-      });
+      Papa.parse(file, { header: true, preview: 1, complete(results) {
+        const keys = Object.keys(results.data[0] || {});
+        log(`Columns (${keys.length}):\n` + keys.map(k => `"${k}" [${Array.from(k).map(c=>c.charCodeAt(0)).join(',')}]`).join('\n'));
+      }});
     }
 
     function importCsv() {
       const { col, key } = getSelected();
       const file = document.getElementById('csvFile').files[0];
       if (!file) { alert('กรุณาเลือกไฟล์ CSV'); return; }
-
-      document.getElementById('output').textContent = `กำลังโหลดข้อมูลจาก ${col}...`;
-
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async function(results) {
-          const rows = results.data;
-
-          // โหลด docs ทั้งหมดจาก Firestore แล้ว map ด้วย key field
-          const snapshot = await db.collection(col).get();
-          const docMap = {};
-          snapshot.forEach(doc => {
-            const val = (doc.data()[key] || '').toString().trim();
-            if (val) docMap[val] = doc.id;
-          });
-
-          document.getElementById('output').textContent =
-            `พบ ${snapshot.size} docs ใน Firestore, CSV มี ${rows.length} รายการ กำลังอัปเดต...`;
-
-          let success = 0, skipped = 0, failed = 0;
-          for (const row of rows) {
-            const keyValue = (row[key] || '').toString().trim();
-            if (!keyValue) { skipped++; continue; }
-
-            const docId = docMap[keyValue];
-            if (!docId) { skipped++; continue; }
-
-            try {
-              await db.collection(col).doc(docId).update(deserializeRow(row));
-              success++;
-            } catch (error) {
-              console.error(`เกิดข้อผิดพลาด ${key}=${keyValue}:`, error);
-              failed++;
-            }
-          }
-          const skipMsg = skipped > 0 ? `, ข้าม ${skipped} รายการ (ไม่พบใน Firestore)` : '';
-          document.getElementById('output').textContent =
-            `เสร็จสิ้น [${col}]: อัปเดต ${success} รายการ${skipMsg}, ผิดพลาด ${failed} รายการ`;
+      log(`กำลังโหลดข้อมูลจาก ${col}...`);
+      Papa.parse(file, { header: true, skipEmptyLines: true, complete: async function(results) {
+        const rows = results.data;
+        const snapshot = await db.collection(col).get();
+        const docMap = {};
+        snapshot.forEach(doc => { const v = (doc.data()[key]||'').toString().trim(); if(v) docMap[v]=doc.id; });
+        log(`พบ ${snapshot.size} docs ใน Firestore, CSV มี ${rows.length} รายการ กำลังอัปเดต...`);
+        let success=0, skipped=0, failed=0;
+        for (const row of rows) {
+          const kv = (row[key]||'').toString().trim();
+          if (!kv || !docMap[kv]) { skipped++; continue; }
+          try { await db.collection(col).doc(docMap[kv]).update(deserializeRow(row)); success++; }
+          catch(e) { console.error(e); failed++; }
         }
+        log(`เสร็จสิ้น [${col}]: อัปเดต ${success}${skipped?' , ข้าม '+skipped:''}, ผิดพลาด ${failed}`);
+      }});
+    }
+
+    // ── Medical ICD10 Mapping ─────────────────────────────
+    const MAPPING_COLLECTION = 'medical_icd10_mapping';
+
+    const MAPPING_DATA = [
+      { category: "Analgesic / Anti-Inflamatory",  icd_10: ["M791","R52","M542","M179","M62.6","M5450","N946","M6240"] },
+      { category: "GI Medications",                icd_10: ["R197","K219","R143","K259","K5900","R110","E860","K30","R109"] },
+      { category: "Cough Medications",             icd_10: ["J029","R05","J209","R053"] },
+      { category: "Antihistamine / Decongestant",  icd_10: ["J309","L509","J00","F419"] },
+      { category: "Antibiotics",                   icd_10: ["L04","N3090","J0190","J0390"] },
+      { category: "Emergency Medications",         icd_10: ["E8881","R064","R579","E162","R001","I209"] },
+      { category: "Neuro Medications",             icd_10: ["H8110","H8109","G43909"] },
+      { category: "Eye Medications",               icd_10: ["H109","H1130","H578A9"] },
+      { category: "Medications for External Use",  icd_10: ["R42","T14.1","Z01.3","L309","L559","K1230","W57","B353","L04","L509","B001","M791","R252","M62.6","R55"] },
+      { category: "Other",                         icd_10: ["S93409A","T14.1","Z01.3","R509"] }
+    ];
+
+    // Render preview cards on load
+    (function renderPreview() {
+      const el = document.getElementById('mappingPreview');
+      document.getElementById('mappingCount').textContent = MAPPING_DATA.length + ' หมวด';
+      el.innerHTML = MAPPING_DATA.map(item => `
+        <div class="flex items-start gap-3 bg-gray-50 rounded-xl px-4 py-3">
+          <span class="text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-lg px-2 py-1 mt-0.5 whitespace-nowrap">
+            ${item.icd_10.length} codes
+          </span>
+          <div>
+            <p class="text-sm font-medium text-gray-800">${item.category}</p>
+            <p class="text-xs text-gray-400 mt-0.5 font-mono">${item.icd_10.join(' · ')}</p>
+          </div>
+        </div>
+      `).join('');
+    })();
+
+    async function saveMappingToFirestore() {
+      if (!confirm(`บันทึก ${MAPPING_DATA.length} หมวดลงใน collection "${MAPPING_COLLECTION}"?\n(ถ้ามีข้อมูลเดิมจะถูก upsert ตามชื่อ category)`)) return;
+      log('กำลังบันทึก Medical ICD10 Mapping...');
+
+      // Load existing docs to enable upsert by category
+      const snapshot = await db.collection(MAPPING_COLLECTION).get();
+      const existingMap = {};
+      snapshot.forEach(doc => { existingMap[doc.data().category] = doc.id; });
+
+      let saved = 0, failed = 0;
+      const now = firebase.firestore.FieldValue.serverTimestamp();
+
+      for (const item of MAPPING_DATA) {
+        const docData = { category: item.category, icd_10: item.icd_10, updatedAt: now };
+        try {
+          if (existingMap[item.category]) {
+            await db.collection(MAPPING_COLLECTION).doc(existingMap[item.category]).set(docData);
+          } else {
+            await db.collection(MAPPING_COLLECTION).add(docData);
+          }
+          saved++;
+        } catch(e) {
+          console.error('บันทึกล้มเหลว:', item.category, e);
+          failed++;
+        }
+      }
+      log(`บันทึก Medical ICD10 Mapping สำเร็จ: ${saved} หมวด${failed ? ', ผิดพลาด ' + failed : ''}`);
+    }
+
+    async function loadMappingFromFirestore() {
+      log('กำลังโหลด Medical ICD10 Mapping จาก Firestore...');
+      const snapshot = await db.collection(MAPPING_COLLECTION).orderBy('category').get();
+      if (snapshot.empty) { log('ไม่พบข้อมูลใน ' + MAPPING_COLLECTION); return; }
+      const lines = snapshot.docs.map(doc => {
+        const d = doc.data();
+        return `[${d.category}]\n  ${(d.icd_10 || []).join(', ')}`;
       });
+      log(`โหลดสำเร็จ ${snapshot.size} หมวด:\n\n` + lines.join('\n\n'));
+    }
+
+    async function deleteMappingCollection() {
+      const snapshot = await db.collection(MAPPING_COLLECTION).get();
+      if (snapshot.empty) { log('ไม่มีข้อมูลใน ' + MAPPING_COLLECTION); return; }
+      if (!confirm(`ยืนยันลบข้อมูลทั้งหมด ${snapshot.size} รายการใน "${MAPPING_COLLECTION}"?`)) return;
+      log(`กำลังลบ ${snapshot.size} รายการ...`);
+      let deleted = 0;
+      for (const doc of snapshot.docs) {
+        await doc.ref.delete();
+        deleted++;
+      }
+      log(`ลบเสร็จสิ้น ${deleted} รายการจาก ${MAPPING_COLLECTION}`);
     }
   </script>
-
 </body>
 </html>
