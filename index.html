@@ -3755,12 +3755,40 @@
         }
 
         function _buildChartsheetXml() {
+            // rId1 → drawing1.xml  (drawing layer is required by Excel — cannot point directly to chart)
             return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <chartsheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
   xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheetViews><sheetView tabSelected="0" workbookViewId="0"/></sheetViews>
   <drawing r:id="rId1"/>
 </chartsheet>`;
+        }
+
+        function _buildDrawingXml() {
+            // absoluteAnchor covers full chartsheet; graphicFrame embeds chart via rId1
+            return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+  xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <xdr:absoluteAnchor>
+    <xdr:pos x="0" y="0"/>
+    <xdr:ext cx="9144000" cy="6858000"/>
+    <xdr:graphicFrame macro="">
+      <xdr:nvGraphicFramePr>
+        <xdr:cNvPr id="2" name="Chart 1"/>
+        <xdr:cNvGraphicFramePr/>
+      </xdr:nvGraphicFramePr>
+      <xdr:xfrm><a:off x="0" y="0"/><a:ext cx="9144000" cy="6858000"/></xdr:xfrm>
+      <a:graphic>
+        <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart">
+          <c:chart r:id="rId1"/>
+        </a:graphicData>
+      </a:graphic>
+    </xdr:graphicFrame>
+    <xdr:clientData/>
+  </xdr:absoluteAnchor>
+</xdr:wsDr>`;
         }
 
         // ── Main export function ──────────────────────────────────────────────
@@ -3872,12 +3900,12 @@
                 return (topN > 0 && len > topN) ? topN + 1 : len;
             })();
 
-            // Add chart XML
+            // ── chart1.xml ───────────────────────────────────────────────────
             zip.file('xl/charts/chart1.xml', _buildChartXml(lastDonutData.title, CHART_SHEET, n));
 
-            // Add chartsheet (a full-page chart sheet named "กราฟ")
-            zip.file('xl/chartsheets/sheet1.xml', _buildChartsheetXml());
-            zip.file('xl/chartsheets/_rels/sheet1.xml.rels',
+            // ── drawing1.xml (required middle layer: chartsheet → drawing → chart) ──
+            zip.file('xl/drawings/drawing1.xml', _buildDrawingXml());
+            zip.file('xl/drawings/_rels/drawing1.xml.rels',
                 `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1"
@@ -3885,7 +3913,17 @@
     Target="../charts/chart1.xml"/>
 </Relationships>`);
 
-            // Patch workbook.xml — add chartsheet entry
+            // ── chartsheet: rId1 → drawing1.xml (Type must be "drawing") ────
+            zip.file('xl/chartsheets/sheet1.xml', _buildChartsheetXml());
+            zip.file('xl/chartsheets/_rels/sheet1.xml.rels',
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing"
+    Target="../drawings/drawing1.xml"/>
+</Relationships>`);
+
+            // ── Patch workbook.xml — add chartsheet entry ────────────────────
             let wbXml = await zip.file('xl/workbook.xml').async('string');
             const sheetIds = [...wbXml.matchAll(/sheetId="(\d+)"/g)].map(m => +m[1]);
             const rIds     = [...wbXml.matchAll(/r:id="rId(\d+)"/g)].map(m => +m[1]);
@@ -3895,7 +3933,7 @@
                 `<sheet name="กราฟ" sheetId="${newSId}" r:id="rId${newRId}"/></sheets>`);
             zip.file('xl/workbook.xml', wbXml);
 
-            // Patch workbook rels — add chartsheet relationship
+            // ── Patch workbook rels — add chartsheet relationship ─────────────
             let wbRels = await zip.file('xl/_rels/workbook.xml.rels').async('string');
             wbRels = wbRels.replace('</Relationships>',
                 `<Relationship Id="rId${newRId}"
@@ -3903,11 +3941,13 @@
     Target="chartsheets/sheet1.xml"/></Relationships>`);
             zip.file('xl/_rels/workbook.xml.rels', wbRels);
 
-            // Patch [Content_Types].xml
+            // ── Patch [Content_Types].xml ────────────────────────────────────
             let ct = await zip.file('[Content_Types].xml').async('string');
             ct = ct.replace('</Types>',
                 `<Override PartName="/xl/chartsheets/sheet1.xml"
     ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml"/>
+  <Override PartName="/xl/drawings/drawing1.xml"
+    ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>
   <Override PartName="/xl/charts/chart1.xml"
     ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>
 </Types>`);
