@@ -3771,6 +3771,13 @@
         async function countAllMedicineNameByDate(startDate, endDate, location) {
             const userData = userDb.data();
 
+            // Build employeeId → department lookup
+            const empSnap = await db.collection("employees").get();
+            const empDeptMap = {};
+            empSnap.forEach(doc => {
+                empDeptMap[doc.id] = doc.data().department || "ไม่ระบุ";
+            });
+
             let opdCardsQuery = db.collectionGroup("opdCard")
                 .where("visitDate", ">=", startDate)
                 .where("visitDate", "<=", endDate);
@@ -3781,34 +3788,41 @@
                 opdCardsQuery = opdCardsQuery.where("location", "==", location);
             }
 
-            const serviceTypeCount = {};
+            // { medicineName: { qty: N, depts: { deptName: count } } }
+            const medicineMap = {};
+            const allDepts = new Set();
 
             try {
                 const snapshot = await opdCardsQuery.get();
 
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    console.log(data)
                     const meds = data.medicines || [];
+                    const employeeId = doc.ref.parent.parent.id;
+                    const dept = empDeptMap[employeeId] || "ไม่ระบุ";
+                    allDepts.add(dept);
 
                     meds.forEach((med) => {
-                        const name = med.name + " (" + med.unit + ")" || "ไม่ระบุ";
+                        const name = (med.name || "ไม่ระบุ") + " (" + (med.unit || "") + ")";
+                        const qty = med.quantity || 0;
 
-                        serviceTypeCount[name] = (serviceTypeCount[name] || 0) + (med.quantity || 0);
+                        if (!medicineMap[name]) medicineMap[name] = { qty: 0, depts: {} };
+                        medicineMap[name].qty += qty;
+                        medicineMap[name].depts[dept] = (medicineMap[name].depts[dept] || 0) + qty;
                     });
                 });
 
-                console.log(serviceTypeCount);
-                const resultArray = Object.entries(serviceTypeCount).map(([name, qty]) => ({
+                const departments = [...allDepts].sort();
+                const resultArray = Object.entries(medicineMap).map(([name, val]) => ({
                     name,
-                    qty
+                    qty: val.qty,
+                    depts: val.depts
                 }));
-                console.log(resultArray);
-                return resultArray;
+                return { records: resultArray, departments };
 
             } catch (error) {
                 console.error("เกิดข้อผิดพลาดในการ query:", error);
-                return {};
+                return { records: [], departments: [] };
             }
         }
         async function countAllOpdCardByDepartment(startDate, endDate, location) {
@@ -4040,6 +4054,7 @@
         }
         async function generateDiagnosisReport(startDate, endDate, location, mode) {
             let records = [];
+            let medicineDepts = [];   // department columns for medicine report
             let h1 = '', h2 = '', h3 = '';
             let icd10Map = {};
 
@@ -4061,7 +4076,9 @@
                 h1 = 'รายงานตามการใช้ยา';
                 h2 = 'การใช้ยา';
                 h3 = 'สัดส่วนการใช้ยา';
-                records = await countAllMedicineNameByDate(startDate, endDate, location);
+                const medicineResult = await countAllMedicineNameByDate(startDate, endDate, location);
+                records = medicineResult.records;
+                medicineDepts = medicineResult.departments;
             } else if (mode == 'department') {
                 h1 = 'รายงานตามแผนก';
                 h2 = 'แผนก';
@@ -4070,8 +4087,16 @@
             }
 
             const isDiagnosis = mode === 'diagnosis';
+            const isMedicine  = mode === 'medicine';
+            // extraHeader = columns BEFORE จำนวน (Disease System for diagnosis)
             const extraHeader = isDiagnosis
                 ? `<th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disease System</th>`
+                : '';
+            // postHeader = columns AFTER จำนวน (department breakdown for medicine)
+            const postHeader = isMedicine
+                ? medicineDepts.map(d =>
+                    `<th class="py-2 px-4 border-b text-center text-xs font-medium text-gray-500 uppercase tracking-wider">${d}</th>`
+                  ).join('')
                 : '';
 
             let html = `
@@ -4086,6 +4111,7 @@
                                             <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${h2}</th>
                                             ${extraHeader}
                                             <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวน</th>
+                                            ${postHeader}
                                             <th class="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ร้อยละ</th>
                                         </tr>
                                     </thead>
@@ -4130,7 +4156,8 @@
                 const percentage = totalCount > 0 ? (count / totalCount * 100).toFixed(2) : 0;
                 totalPercentage += parseFloat(percentage);
 
-                let extraCell = '';
+                let extraCell = '';   // columns before จำนวน
+                let postCell  = '';   // columns after จำนวน
                 if (isDiagnosis) {
                     const sys = icd10Map[name] || 'ไม่ระบุ';
                     const ci = (systemColorIdx[sys] ?? 0) % disPalette.length;
@@ -4138,6 +4165,12 @@
                     extraCell = `<td class="py-2 px-4 border-b">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${p.bg} ${p.text}">${sys}</span>
                     </td>`;
+                } else if (isMedicine) {
+                    postCell = medicineDepts.map(d =>
+                        `<td class="py-2 px-4 border-b text-center">${type.depts?.[d] || 0}</td>`
+                    ).join('');
+                    chartLabels.push(name);
+                    chartData.push(count);
                 } else {
                     chartLabels.push(name);
                     chartData.push(count);
@@ -4148,6 +4181,7 @@
                                         <td class="py-2 px-4 border-b">${name}</td>
                                         ${extraCell}
                                         <td class="py-2 px-4 border-b">${count}</td>
+                                        ${postCell}
                                         <td class="py-2 px-4 border-b">${percentage}%</td>
                                     </tr>
 `;
@@ -4159,12 +4193,21 @@
                     .forEach(([sys, qty]) => { chartLabels.push(sys); chartData.push(qty); });
             }
 
+            const deptTotalCells = isMedicine
+                ? medicineDepts.map(d => {
+                    const deptTotal = records.reduce((sum, r) => sum + (r.depts?.[d] || 0), 0);
+                    return `<td class="py-2 px-4 border-b text-center font-medium">${deptTotal}</td>`;
+                  }).join('')
+                : '';
+
             html += `
                                         <tr class="bg-gray-100 font-medium">
                                             <td class="py-2 px-4 border-b" ${isDiagnosis ? 'colspan="2"' : ''}>รวม</td>
                                             <td class="py-2 px-4 border-b">${totalCount}</td>
+                                            ${deptTotalCells}
                                             <td class="py-2 px-4 border-b">${totalPercentage.toFixed(2)}%</td>
                                         </tr>
+
                                     </tbody>
                                 </table>
                             </div>
