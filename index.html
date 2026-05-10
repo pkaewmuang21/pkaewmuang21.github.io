@@ -14,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script>
         tailwind.config = {
@@ -3698,6 +3699,71 @@
             }, 1000);
         });
 
+        // ── XML helpers ──────────────────────────────────────────────────────
+        function _xmlEsc(s) {
+            return String(s || '')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function _buildChartXml(title, sheetName, n) {
+            const f = _xmlEsc(sheetName);
+            const t = _xmlEsc(title);
+            return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <c:date1904 val="0"/>
+  <c:lang val="th-TH"/>
+  <c:chart>
+    <c:title>
+      <c:tx><c:rich><a:bodyPr/><a:lstStyle/>
+        <a:p><a:pPr><a:defRPr b="1" sz="1300"/></a:pPr>
+          <a:r><a:rPr lang="th-TH" b="1"/><a:t>${t}</a:t></a:r>
+        </a:p>
+      </c:rich></c:tx>
+      <c:overlay val="0"/>
+    </c:title>
+    <c:autoTitleDeleted val="0"/>
+    <c:plotArea>
+      <c:doughnutChart>
+        <c:varyColors val="1"/>
+        <c:ser>
+          <c:idx val="0"/><c:order val="0"/>
+          <c:cat>
+            <c:strRef>
+              <c:f>${f}!$A$2:$A$${n + 1}</c:f>
+              <c:strCache><c:ptCount val="${n}"/></c:strCache>
+            </c:strRef>
+          </c:cat>
+          <c:val>
+            <c:numRef>
+              <c:f>${f}!$B$2:$B$${n + 1}</c:f>
+              <c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="${n}"/></c:numCache>
+            </c:numRef>
+          </c:val>
+        </c:ser>
+        <c:firstSliceAng val="0"/>
+        <c:holeSize val="50"/>
+      </c:doughnutChart>
+    </c:plotArea>
+    <c:legend><c:legendPos val="r"/><c:overlay val="0"/></c:legend>
+    <c:plotVisOnly val="1"/>
+    <c:dispBlanksAs val="gap"/>
+  </c:chart>
+</c:chartSpace>`;
+        }
+
+        function _buildChartsheetXml() {
+            return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<chartsheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheetViews><sheetView tabSelected="0" workbookViewId="0"/></sheetViews>
+  <drawing r:id="rId1"/>
+</chartsheet>`;
+        }
+
+        // ── Main export function ──────────────────────────────────────────────
         async function exportReportExcel() {
             const table = document.querySelector('#reportResults table');
             if (!table) { alert('ไม่พบข้อมูลตารางสำหรับ Export'); return; }
@@ -3706,92 +3772,156 @@
             const reportTitle  = reportTypeEl.options[reportTypeEl.selectedIndex].text;
             const startDate    = document.getElementById('reportStartDate').value;
             const endDate      = document.getElementById('reportEndDate').value;
+            const filename     = `${reportTitle}_${startDate}_${endDate}.xlsx`;
 
-            // ── Parse HTML table → array of arrays ──────────────────────────
+            // ── Parse HTML table ─────────────────────────────────────────────
             const clone = table.cloneNode(true);
-            clone.querySelectorAll('span').forEach(span => span.replaceWith(span.textContent));
+            clone.querySelectorAll('span').forEach(s => s.replaceWith(s.textContent));
             const tableRows = [...clone.querySelectorAll('tr')].map(tr =>
                 [...tr.querySelectorAll('th, td')].map(c => c.textContent.trim())
             );
 
-            // ── Build workbook ───────────────────────────────────────────────
-            const workbook  = new ExcelJS.Workbook();
+            // ── Build ExcelJS workbook ───────────────────────────────────────
+            const workbook = new ExcelJS.Workbook();
             workbook.creator = 'PG Firstaid';
             workbook.created = new Date();
 
-            // Sheet 1: Data ──────────────────────────────────────────────────
+            // Sheet 1: ข้อมูล
             const dataSheet = workbook.addWorksheet('ข้อมูล');
-
-            // Title rows
-            const titleRow = dataSheet.addRow([reportTitle]);
+            const titleRow  = dataSheet.addRow([reportTitle]);
             titleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF1E3A5F' } };
-            dataSheet.addRow([`ช่วงวันที่: ${startDate} ถึง ${endDate}`]).getCell(1).font = { italic: true, color: { argb: 'FF64748B' } };
+            dataSheet.addRow([`ช่วงวันที่: ${startDate} ถึง ${endDate}`])
+                     .getCell(1).font = { italic: true, color: { argb: 'FF64748B' } };
             dataSheet.addRow([]);
 
-            const headerBg   = 'FFE2E8F0';
-            const totalBg    = 'FFD1FAE5';
-            const stripeBg   = 'FFF8FAFC';
-
             tableRows.forEach((row, i) => {
-                const excelRow = dataSheet.addRow(row);
-                const isHeader = i === 0;
-                const isTotal  = i === tableRows.length - 1;
-
-                excelRow.eachCell({ includeEmpty: true }, cell => {
-                    cell.alignment = { vertical: 'middle', wrapText: false };
+                const er = dataSheet.addRow(row);
+                const isHeader = i === 0, isTotal = i === tableRows.length - 1;
+                er.eachCell({ includeEmpty: true }, cell => {
+                    cell.alignment = { vertical: 'middle' };
                     if (isHeader) {
                         cell.font = { bold: true, color: { argb: 'FF1E3A5F' } };
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
                         cell.border = { bottom: { style: 'medium', color: { argb: 'FF94A3B8' } } };
                     } else if (isTotal) {
                         cell.font = { bold: true };
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalBg } };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
                         cell.border = { top: { style: 'thin', color: { argb: 'FF94A3B8' } } };
                     } else if (i % 2 === 0) {
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: stripeBg } };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
                     }
                 });
             });
-
-            // Auto-width columns (max 60, min 12)
-            const colCount = Math.max(...tableRows.map(r => r.length));
+            const colCount = tableRows.length ? Math.max(...tableRows.map(r => r.length)) : 1;
             for (let c = 1; c <= colCount; c++) {
                 const maxLen = Math.max(...tableRows.map(r => (r[c - 1] || '').length));
                 dataSheet.getColumn(c).width = Math.min(Math.max(maxLen + 4, 12), 60);
             }
 
-            // Sheet 2: Chart ─────────────────────────────────────────────────
-            const chartCanvas = document.getElementById('donutChart');
-            if (chartCanvas && chartCanvas.width > 0 && chartCanvas.height > 0) {
-                const base64 = chartCanvas.toDataURL('image/png').split(',')[1];
-                const imageId = workbook.addImage({ base64, extension: 'png' });
-                const chartSheet = workbook.addWorksheet('กราฟ');
+            // Sheet 2: ChartData (สำหรับ native chart)
+            const hasChart = lastDonutData && lastDonutData.labels && lastDonutData.labels.length > 0;
+            const CHART_SHEET = 'ChartData';
+            if (hasChart) {
+                const cd = lastDonutData;
+                // ใช้ข้อมูล sorted เดียวกับที่ chart แสดง (top N + อื่นๆ)
+                const topNEl = document.getElementById('topNSelect');
+                const topN = topNEl ? parseInt(topNEl.value) : 0;
+                const combined = cd.labels.map((l, i) => ({ l, v: cd.data[i] }))
+                                          .sort((a, b) => b.v - a.v);
+                let chartLabels, chartVals;
+                if (topN > 0 && combined.length > topN) {
+                    const top = combined.slice(0, topN);
+                    const othersSum = combined.slice(topN).reduce((s, x) => s + x.v, 0);
+                    chartLabels = [...top.map(x => x.l), 'อื่นๆ'];
+                    chartVals   = [...top.map(x => x.v), othersSum];
+                } else {
+                    chartLabels = combined.map(x => x.l);
+                    chartVals   = combined.map(x => x.v);
+                }
+                const total = chartVals.reduce((s, v) => s + v, 0);
 
-                // Title in chart sheet
-                const ctRow = chartSheet.addRow([reportTitle]);
-                ctRow.getCell(1).font = { bold: true, size: 13, color: { argb: 'FF1E3A5F' } };
-                chartSheet.addRow([`ช่วงวันที่: ${startDate} ถึง ${endDate}`]).getCell(1).font = { italic: true, color: { argb: 'FF64748B' } };
-                chartSheet.addRow([]);
-
-                const imgW = 480, imgH = 480;
-                chartSheet.addImage(imageId, {
-                    tl: { col: 0, row: 3 },
-                    ext: { width: imgW, height: imgH }
+                const cdSheet = workbook.addWorksheet(CHART_SHEET);
+                cdSheet.addRow(['หมวด', 'จำนวน', 'ร้อยละ']);
+                chartLabels.forEach((label, i) => {
+                    const pct = total > 0 ? parseFloat((chartVals[i] / total * 100).toFixed(2)) : 0;
+                    cdSheet.addRow([label, chartVals[i], pct]);
                 });
-
-                // Ensure rows/cols are tall/wide enough to display image
-                chartSheet.getColumn(1).width = 70;
-                for (let r = 4; r <= 28; r++) chartSheet.getRow(r).height = 18;
+                // Style header
+                cdSheet.getRow(1).eachCell(cell => {
+                    cell.font = { bold: true };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+                });
+                cdSheet.columns = [{ width: 45 }, { width: 12 }, { width: 12 }];
             }
 
+            // ── Generate base xlsx buffer ────────────────────────────────────
+            const baseBuffer = await workbook.xlsx.writeBuffer();
+            if (!hasChart) {
+                _downloadBuffer(baseBuffer, filename);
+                return;
+            }
+
+            // ── Inject native chart via JSZip ────────────────────────────────
+            const zip = await JSZip.loadAsync(baseBuffer);
+
+            // Determine chart data sheet index (ExcelJS puts sheets in order: ข้อมูล=1, ChartData=2)
+            const n = (() => {
+                const topNEl = document.getElementById('topNSelect');
+                const topN = topNEl ? parseInt(topNEl.value) : 0;
+                const len = lastDonutData.labels.length;
+                return (topN > 0 && len > topN) ? topN + 1 : len;
+            })();
+
+            // Add chart XML
+            zip.file('xl/charts/chart1.xml', _buildChartXml(lastDonutData.title, CHART_SHEET, n));
+
+            // Add chartsheet (a full-page chart sheet named "กราฟ")
+            zip.file('xl/chartsheets/sheet1.xml', _buildChartsheetXml());
+            zip.file('xl/chartsheets/_rels/sheet1.xml.rels',
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart"
+    Target="../charts/chart1.xml"/>
+</Relationships>`);
+
+            // Patch workbook.xml — add chartsheet entry
+            let wbXml = await zip.file('xl/workbook.xml').async('string');
+            const sheetIds = [...wbXml.matchAll(/sheetId="(\d+)"/g)].map(m => +m[1]);
+            const rIds     = [...wbXml.matchAll(/r:id="rId(\d+)"/g)].map(m => +m[1]);
+            const newSId   = Math.max(0, ...sheetIds) + 1;
+            const newRId   = Math.max(0, ...rIds)     + 1;
+            wbXml = wbXml.replace('</sheets>',
+                `<sheet name="กราฟ" sheetId="${newSId}" r:id="rId${newRId}"/></sheets>`);
+            zip.file('xl/workbook.xml', wbXml);
+
+            // Patch workbook rels — add chartsheet relationship
+            let wbRels = await zip.file('xl/_rels/workbook.xml.rels').async('string');
+            wbRels = wbRels.replace('</Relationships>',
+                `<Relationship Id="rId${newRId}"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartsheet"
+    Target="chartsheets/sheet1.xml"/></Relationships>`);
+            zip.file('xl/_rels/workbook.xml.rels', wbRels);
+
+            // Patch [Content_Types].xml
+            let ct = await zip.file('[Content_Types].xml').async('string');
+            ct = ct.replace('</Types>',
+                `<Override PartName="/xl/chartsheets/sheet1.xml"
+    ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml"/>
+  <Override PartName="/xl/charts/chart1.xml"
+    ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>
+</Types>`);
+            zip.file('[Content_Types].xml', ct);
+
             // ── Download ─────────────────────────────────────────────────────
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob   = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const url    = URL.createObjectURL(blob);
-            Object.assign(document.createElement('a'), {
-                href: url,
-                download: `${reportTitle}_${startDate}_${endDate}.xlsx`
-            }).click();
+            const finalBuf = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+            _downloadBuffer(finalBuf, filename);
+        }
+
+        function _downloadBuffer(buffer, filename) {
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url  = URL.createObjectURL(blob);
+            Object.assign(document.createElement('a'), { href: url, download: filename }).click();
             URL.revokeObjectURL(url);
         }
 
