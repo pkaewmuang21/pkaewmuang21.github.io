@@ -12,6 +12,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script>
         tailwind.config = {
@@ -688,8 +690,11 @@
                             <input type="date" id="reportEndDate" class="form-input w-full px-3 py-2 border rounded-md focus:outline-none">
                         </div>
                     </div>
-                    <div class="flex justify-center mb-6">
+                    <div class="flex justify-center gap-3 mb-6">
                         <button id="generateReportBtn" class="btn-primary px-6 py-2 rounded-md"><i class="fa-solid fa-chart-line"></i> สร้างรายงาน</button>
+                        <button id="exportExcelBtn" onclick="exportReportExcel()" class="hidden items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium transition-colors duration-200">
+                            <i class="fa-solid fa-file-excel"></i> Export Excel
+                        </button>
                     </div>
                     <div id="reportResults" class="mt-4">
                         <p class="text-gray-500 text-center">กรุณาเลือกประเภทรายงานและช่วงเวลาที่ต้องการ</p>
@@ -3688,8 +3693,107 @@
                         break;
                 }
                 hideLoading();
+                document.getElementById('exportExcelBtn').classList.remove('hidden');
+                document.getElementById('exportExcelBtn').classList.add('inline-flex');
             }, 1000);
         });
+
+        async function exportReportExcel() {
+            const table = document.querySelector('#reportResults table');
+            if (!table) { alert('ไม่พบข้อมูลตารางสำหรับ Export'); return; }
+
+            const reportTypeEl = document.getElementById('reportType');
+            const reportTitle  = reportTypeEl.options[reportTypeEl.selectedIndex].text;
+            const startDate    = document.getElementById('reportStartDate').value;
+            const endDate      = document.getElementById('reportEndDate').value;
+
+            // ── Parse HTML table → array of arrays ──────────────────────────
+            const clone = table.cloneNode(true);
+            clone.querySelectorAll('span').forEach(span => span.replaceWith(span.textContent));
+            const tableRows = [...clone.querySelectorAll('tr')].map(tr =>
+                [...tr.querySelectorAll('th, td')].map(c => c.textContent.trim())
+            );
+
+            // ── Build workbook ───────────────────────────────────────────────
+            const workbook  = new ExcelJS.Workbook();
+            workbook.creator = 'PG Firstaid';
+            workbook.created = new Date();
+
+            // Sheet 1: Data ──────────────────────────────────────────────────
+            const dataSheet = workbook.addWorksheet('ข้อมูล');
+
+            // Title rows
+            const titleRow = dataSheet.addRow([reportTitle]);
+            titleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF1E3A5F' } };
+            dataSheet.addRow([`ช่วงวันที่: ${startDate} ถึง ${endDate}`]).getCell(1).font = { italic: true, color: { argb: 'FF64748B' } };
+            dataSheet.addRow([]);
+
+            const headerBg   = 'FFE2E8F0';
+            const totalBg    = 'FFD1FAE5';
+            const stripeBg   = 'FFF8FAFC';
+
+            tableRows.forEach((row, i) => {
+                const excelRow = dataSheet.addRow(row);
+                const isHeader = i === 0;
+                const isTotal  = i === tableRows.length - 1;
+
+                excelRow.eachCell({ includeEmpty: true }, cell => {
+                    cell.alignment = { vertical: 'middle', wrapText: false };
+                    if (isHeader) {
+                        cell.font = { bold: true, color: { argb: 'FF1E3A5F' } };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+                        cell.border = { bottom: { style: 'medium', color: { argb: 'FF94A3B8' } } };
+                    } else if (isTotal) {
+                        cell.font = { bold: true };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalBg } };
+                        cell.border = { top: { style: 'thin', color: { argb: 'FF94A3B8' } } };
+                    } else if (i % 2 === 0) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: stripeBg } };
+                    }
+                });
+            });
+
+            // Auto-width columns (max 60, min 12)
+            const colCount = Math.max(...tableRows.map(r => r.length));
+            for (let c = 1; c <= colCount; c++) {
+                const maxLen = Math.max(...tableRows.map(r => (r[c - 1] || '').length));
+                dataSheet.getColumn(c).width = Math.min(Math.max(maxLen + 4, 12), 60);
+            }
+
+            // Sheet 2: Chart ─────────────────────────────────────────────────
+            const chartCanvas = document.getElementById('donutChart');
+            if (chartCanvas && chartCanvas.width > 0 && chartCanvas.height > 0) {
+                const base64 = chartCanvas.toDataURL('image/png').split(',')[1];
+                const imageId = workbook.addImage({ base64, extension: 'png' });
+                const chartSheet = workbook.addWorksheet('กราฟ');
+
+                // Title in chart sheet
+                const ctRow = chartSheet.addRow([reportTitle]);
+                ctRow.getCell(1).font = { bold: true, size: 13, color: { argb: 'FF1E3A5F' } };
+                chartSheet.addRow([`ช่วงวันที่: ${startDate} ถึง ${endDate}`]).getCell(1).font = { italic: true, color: { argb: 'FF64748B' } };
+                chartSheet.addRow([]);
+
+                const imgW = 480, imgH = 480;
+                chartSheet.addImage(imageId, {
+                    tl: { col: 0, row: 3 },
+                    ext: { width: imgW, height: imgH }
+                });
+
+                // Ensure rows/cols are tall/wide enough to display image
+                chartSheet.getColumn(1).width = 70;
+                for (let r = 4; r <= 28; r++) chartSheet.getRow(r).height = 18;
+            }
+
+            // ── Download ─────────────────────────────────────────────────────
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob   = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url    = URL.createObjectURL(blob);
+            Object.assign(document.createElement('a'), {
+                href: url,
+                download: `${reportTitle}_${startDate}_${endDate}.xlsx`
+            }).click();
+            URL.revokeObjectURL(url);
+        }
 
         async function countAllServiceTypeByDate(startDate, endDate, location) {
             const userData = userDb.data();
@@ -3828,40 +3932,39 @@
         async function countAllOpdCardByDepartment(startDate, endDate, location) {
             const userData = userDb.data();
 
-            const employeeSnapshot = await db.collection("employees").get();
-            const departmentCount = {};
+            // Run both fetches in parallel — 2 reads total instead of N+1 sequential
+            let opdCardsQuery = db.collectionGroup("opdCard")
+                .where("visitDate", ">=", startDate)
+                .where("visitDate", "<=", endDate);
 
-            for (const empDoc of employeeSnapshot.docs) {
-                const employee = empDoc.data();
-                const department = employee.department || "ไม่ระบุ";
-
-                let opdCardQuery = db
-                    .collection("employees")
-                    .doc(empDoc.id)
-                    .collection("opdCard")
-                    .where("visitDate", ">=", startDate)
-                    .where("visitDate", "<=", endDate);
-
-                if (!userData.isAdmin) {
-                    opdCardsQuery = opdCardsQuery.where("location", "==", userData.location);
-                } else if (location !== '') {
-                    opdCardsQuery = opdCardsQuery.where("location", "==", location);
-                }
-
-                const opdCardSnapshot = await opdCardQuery.get();
-
-                const count = opdCardSnapshot.size;
-
-                departmentCount[department] = (departmentCount[department] || 0) + count;
+            if (!userData.isAdmin) {
+                opdCardsQuery = opdCardsQuery.where("location", "==", userData.location);
+            } else if (location !== '') {
+                opdCardsQuery = opdCardsQuery.where("location", "==", location);
             }
 
-            console.log(departmentCount);
-            let resultArray = Object.entries(departmentCount).map(([name, qty]) => ({
-                name,
-                qty
-            }));
-            resultArray = resultArray.filter(item => item.qty !== 0);
-            console.log(resultArray);
+            const [empSnapshot, opdSnapshot] = await Promise.all([
+                db.collection("employees").get(),
+                opdCardsQuery.get()
+            ]);
+
+            // Build employeeId → department lookup
+            const empDeptMap = {};
+            empSnapshot.forEach(doc => {
+                empDeptMap[doc.id] = doc.data().department || "ไม่ระบุ";
+            });
+
+            // Count visits per department
+            const departmentCount = {};
+            opdSnapshot.forEach(doc => {
+                const employeeId = doc.ref.parent.parent.id;
+                const dept = empDeptMap[employeeId] || "ไม่ระบุ";
+                departmentCount[dept] = (departmentCount[dept] || 0) + 1;
+            });
+
+            const resultArray = Object.entries(departmentCount)
+                .filter(([, qty]) => qty > 0)
+                .map(([name, qty]) => ({ name, qty }));
             return resultArray;
         }
         // Generate Daily Report
