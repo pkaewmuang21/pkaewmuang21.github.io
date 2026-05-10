@@ -3877,8 +3877,10 @@
                 dataSheet.getColumn(c).width = Math.min(Math.max(maxLen + 4, 12), 60);
             }
 
-            // Sheet 2: ChartData (สำหรับ native chart)
-            const hasChart = lastDonutData && lastDonutData.labels && lastDonutData.labels.length > 0;
+            // Sheet 2: ChartData (สำหรับ native chart) — ไม่แสดงสำหรับ patient report
+            const reportTypeVal = document.getElementById('reportType').value;
+            const hasChart = reportTypeVal !== 'patient'
+                && lastDonutData && lastDonutData.labels && lastDonutData.labels.length > 0;
             const CHART_SHEET = 'ChartData';
             if (hasChart) {
                 const cd = lastDonutData;
