@@ -3827,12 +3827,18 @@
             const endDate      = document.getElementById('reportEndDate').value;
             const filename     = `${reportTitle}_${startDate}_${endDate}.xlsx`;
 
-            // ── Parse HTML table ─────────────────────────────────────────────
+            // ── Parse HTML table (expand colspan so columns stay aligned) ────
             const clone = table.cloneNode(true);
             clone.querySelectorAll('span').forEach(s => s.replaceWith(s.textContent));
-            const tableRows = [...clone.querySelectorAll('tr')].map(tr =>
-                [...tr.querySelectorAll('th, td')].map(c => c.textContent.trim())
-            );
+            const tableRows = [...clone.querySelectorAll('tr')].map(tr => {
+                const row = [];
+                [...tr.querySelectorAll('th, td')].forEach(cell => {
+                    const span = parseInt(cell.getAttribute('colspan') || '1', 10);
+                    row.push(cell.textContent.trim());          // first col = value
+                    for (let i = 1; i < span; i++) row.push(''); // extra cols = empty
+                });
+                return row;
+            });
 
             // ── Build ExcelJS workbook ───────────────────────────────────────
             const workbook = new ExcelJS.Workbook();
