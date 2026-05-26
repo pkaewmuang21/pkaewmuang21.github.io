@@ -268,6 +268,7 @@
                     <div class="tab px-4 py-2 rounded-t-lg" data-tab="searchRecord"><i class="fa-solid fa-hand-holding-medical fa-lg"></i> การรักษา</div>
                     <div class="tab px-4 py-2 rounded-t-lg" data-tab="reports"><i class="fa-solid fa-book-medical fa-lg"></i> รายงาน</div>
                     <div class="tab px-4 py-2 rounded-t-lg" data-tab="medicalInventory" onclick="medicalInventory()"><i class="fa-solid fa-flask fa-lg"></i> คลังยา</div>
+                    <div class="tab px-4 py-2 rounded-t-lg" data-tab="lookerDashboard"><i class="fa-solid fa-gauge fa-lg"></i> Dashboard</div>
                 </div>
                 <!-- New Record Form -->
                 <div id="newRecord" class="tab-content ">
@@ -824,6 +825,37 @@
                         </div>
                     </div>
 
+                </div>
+
+                <!-- Looker Dashboard Tab -->
+                <div id="lookerDashboard" class="tab-content hidden bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-navy">Looker Dashboard</h2>
+                        <button id="updateSheetBtn" onclick="updateSheetData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-colors">
+                            <i class="fa-solid fa-arrows-rotate"></i> อัปเดตข้อมูลลง Sheet
+                        </button>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
+                        <p class="text-sm text-gray-600 mb-2 font-medium">คำแนะนำ:</p>
+                        <ul class="text-xs text-gray-500 list-disc ml-5 space-y-1">
+                            <li>กดปุ่ม <b>"อัปเดตข้อมูลลง Sheet"</b> เพื่อส่งข้อมูลล่าสุดไปยัง Google Sheets</li>
+                            <li>Looker Studio จะดึงข้อมูลจาก Sheet อัตโนมัติ (อาจใช้เวลา 15-60 นาทีในการรีเฟรชข้อมูลใน Looker)</li>
+                            <li>หากต้องการดูข้อมูลทันทีใน Looker ให้กดปุ่ม "Refresh Data" ในหน้า Looker Studio</li>
+                        </ul>
+                    </div>
+
+                    <!-- Dashboard Embed Area -->
+                    <div class="w-full h-[600px] bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
+                        <div id="dashboardFrameContainer" class="w-full h-full hidden">
+                            <iframe id="lookerIframe" width="100%" height="100%" frameborder="0" style="border:0" allowfullscreen></iframe>
+                        </div>
+                        <div id="noDashboardMsg" class="text-center p-8">
+                            <i class="fa-solid fa-chart-column text-5xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500">กรุณาตั้งค่า Link ของ Looker Studio Dashboard</p>
+                            <button onclick="setDashboardUrl()" class="mt-4 text-turquoise hover:underline text-sm">ตั้งค่า Link</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -6348,6 +6380,114 @@
 
             document.getElementById('medicineModal').classList.remove('hidden');
         }
+
+        // ── Looker Dashboard & Sheet Sync ─────────────────────────────────────
+        const APPS_SCRIPT_URL_KEY = 'pg_firstaid_apps_script_url';
+        const LOOKER_URL_KEY = 'pg_firstaid_looker_url';
+
+        function setDashboardUrl() {
+            const url = prompt('กรุณาระบุ Link ของ Looker Studio Dashboard:', localStorage.getItem(LOOKER_URL_KEY) || '');
+            if (url !== null) {
+                localStorage.setItem(LOOKER_URL_KEY, url);
+                loadDashboard();
+            }
+        }
+
+        function loadDashboard() {
+            const url = localStorage.getItem(LOOKER_URL_KEY);
+            const container = document.getElementById('dashboardFrameContainer');
+            const noMsg = document.getElementById('noDashboardMsg');
+            const iframe = document.getElementById('lookerIframe');
+
+            if (url) {
+                iframe.src = url;
+                container.classList.remove('hidden');
+                noMsg.classList.add('hidden');
+            } else {
+                container.classList.add('hidden');
+                noMsg.classList.remove('hidden');
+            }
+        }
+
+        async function updateSheetData() {
+            const scriptUrl = localStorage.getItem(APPS_SCRIPT_URL_KEY) || prompt('กรุณาระบุ URL ของ Google Apps Script Web App ที่ใช้รับข้อมูล:');
+            if (!scriptUrl) return;
+            localStorage.setItem(APPS_SCRIPT_URL_KEY, scriptUrl);
+
+            showLoading('กำลังรวบรวมข้อมูลเพื่ออัปเดต...');
+            try {
+                // 1. Fetch all employees to get department and info
+                const empSnap = await db.collection('employees').get();
+                const employees = {};
+                
+                empSnap.docs.forEach(doc => {
+                    const data = doc.data();
+                    employees[doc.id] = {
+                        department: data.department || '',
+                        congenitalDisease: data.congenitalDisease || '',
+                        allergies: data.allergies || ''
+                    };
+                });
+
+                // 2. Fetch all medical records (opdCard)
+                const allRecords = [];
+                const opdPromises = empSnap.docs.map(async empDoc => {
+                    const opdSnap = await empDoc.ref.collection('opdCard').get();
+                    const empInfo = employees[empDoc.id];
+                    
+                    opdSnap.forEach(doc => {
+                        const d = doc.data();
+                        allRecords.push({
+                            visit_date: d.visitDate ? d.visitDate.replace('T', ' ') : '',
+                            department: empInfo.department,
+                            location: d.location || '',
+                            service_type: d.serviceType || '',
+                            esi_triage: d.esiTriage || '',
+                            chief_complaint: d.chiefComplaint || '',
+                            diagnosis: d.diagnosis || '',
+                            temperature: d.vitalSigns?.temperature || '',
+                            pulse: d.vitalSigns?.pulse || '',
+                            respiration: d.vitalSigns?.respiration || '',
+                            bp: d.vitalSigns?.bloodPressure || '',
+                            spo2: d.vitalSigns?.oxygenSaturation || '',
+                            pain_score: d.vitalSigns?.painScore || '',
+                            updatedAt: d.createdDate ? d.createdDate.toDate().toISOString() : ''
+                        });
+                    });
+                });
+                
+                await Promise.all(opdPromises);
+
+                if (allRecords.length === 0) {
+                    showNotification('info', 'ไม่พบข้อมูล', 'ไม่มีข้อมูลการรักษาที่จะอัปเดต');
+                    hideLoading();
+                    return;
+                }
+
+                showLoading(`กำลังส่งข้อมูล ${allRecords.length} รายการไปยัง Sheet...`);
+
+                // 3. Send to Apps Script
+                // Using fetch with method POST. Note: mode 'no-cors' will result in opaque response,
+                // which is often fine for Apps Script web apps since they don't return JSON easily under CORS.
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(allRecords)
+                });
+
+                showNotification('success', 'สำเร็จ', `อัปเดตข้อมูล ${allRecords.length} รายการเรียบร้อยแล้ว`);
+            } catch (e) {
+                console.error('Update Sheet Error:', e);
+                showNotification('error', 'เกิดข้อผิดพลาด', 'ไม่สามารถอัปเดตข้อมูลได้: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Initialize Dashboard on Tab click
+        document.querySelector('[data-tab="lookerDashboard"]').addEventListener('click', loadDashboard);
     </script>
     <script>
         (function () {
