@@ -829,31 +829,39 @@
 
                 <!-- Looker Dashboard Tab -->
                 <div id="lookerDashboard" class="tab-content hidden bg-white rounded-lg shadow-lg p-6">
-                    <div class="flex justify-between items-center mb-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b pb-4">
                         <h2 class="text-xl font-bold text-navy">Looker Dashboard</h2>
-                        <button id="updateSheetBtn" onclick="updateSheetData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-colors">
-                            <i class="fa-solid fa-arrows-rotate"></i> อัปเดตข้อมูลลง Sheet
-                        </button>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="setDashboardUrl()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md flex items-center gap-2 text-xs transition-colors">
+                                <i class="fa-solid fa-link"></i> ตั้งค่า Dashboard
+                            </button>
+                            <button onclick="setAppsScriptUrl()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md flex items-center gap-2 text-xs transition-colors">
+                                <i class="fa-solid fa-code"></i> ตั้งค่า Apps Script
+                            </button>
+                            <button id="updateSheetBtn" onclick="updateSheetData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-colors">
+                                <i class="fa-solid fa-arrows-rotate"></i> อัปเดตข้อมูลลง Sheet
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
-                        <p class="text-sm text-gray-600 mb-2 font-medium">คำแนะนำ:</p>
-                        <ul class="text-xs text-gray-500 list-disc ml-5 space-y-1">
+                    <div class="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-100">
+                        <p class="text-sm text-blue-800 mb-2 font-medium"><i class="fa-solid fa-circle-info mr-1"></i> คำแนะนำ:</p>
+                        <ul class="text-xs text-blue-700 list-disc ml-5 space-y-1">
                             <li>กดปุ่ม <b>"อัปเดตข้อมูลลง Sheet"</b> เพื่อส่งข้อมูลล่าสุดไปยัง Google Sheets</li>
-                            <li>Looker Studio จะดึงข้อมูลจาก Sheet อัตโนมัติ (อาจใช้เวลา 15-60 นาทีในการรีเฟรชข้อมูลใน Looker)</li>
-                            <li>หากต้องการดูข้อมูลทันทีใน Looker ให้กดปุ่ม "Refresh Data" ในหน้า Looker Studio</li>
+                            <li>Looker Studio จะดึงข้อมูลจาก Sheet อัตโนมัติ (อาจใช้เวลา 15-60 นาทีในการรีเฟรช)</li>
+                            <li>หากต้องการดูข้อมูลทันที ให้กดปุ่ม "Refresh Data" ในหน้า Looker Studio</li>
                         </ul>
                     </div>
 
                     <!-- Dashboard Embed Area -->
-                    <div class="w-full h-[600px] bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
+                    <div class="w-full h-[600px] bg-gray-50 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200 overflow-hidden">
                         <div id="dashboardFrameContainer" class="w-full h-full hidden">
                             <iframe id="lookerIframe" width="100%" height="100%" frameborder="0" style="border:0" allowfullscreen></iframe>
                         </div>
                         <div id="noDashboardMsg" class="text-center p-8">
                             <i class="fa-solid fa-chart-column text-5xl text-gray-300 mb-4"></i>
-                            <p class="text-gray-500">กรุณาตั้งค่า Link ของ Looker Studio Dashboard</p>
-                            <button onclick="setDashboardUrl()" class="mt-4 text-turquoise hover:underline text-sm">ตั้งค่า Link</button>
+                            <p class="text-gray-500 font-medium">ยังไม่ได้เชื่อมต่อ Dashboard</p>
+                            <p class="text-xs text-gray-400 mt-1">กรุณากดปุ่ม "ตั้งค่า Dashboard" ด้านบนเพื่อเริ่มใช้งาน</p>
                         </div>
                     </div>
                 </div>
@@ -6388,8 +6396,15 @@
         function setDashboardUrl() {
             const url = prompt('กรุณาระบุ Link ของ Looker Studio Dashboard:', localStorage.getItem(LOOKER_URL_KEY) || '');
             if (url !== null) {
-                localStorage.setItem(LOOKER_URL_KEY, url);
+                localStorage.setItem(LOOKER_URL_KEY, url.trim());
                 loadDashboard();
+            }
+        }
+
+        function setAppsScriptUrl() {
+            const url = prompt('กรุณาระบุ URL ของ Google Apps Script Web App:', localStorage.getItem(APPS_SCRIPT_URL_KEY) || '');
+            if (url !== null) {
+                localStorage.setItem(APPS_SCRIPT_URL_KEY, url.trim());
             }
         }
 
@@ -6410,9 +6425,13 @@
         }
 
         async function updateSheetData() {
-            const scriptUrl = localStorage.getItem(APPS_SCRIPT_URL_KEY) || prompt('กรุณาระบุ URL ของ Google Apps Script Web App ที่ใช้รับข้อมูล:');
-            if (!scriptUrl) return;
-            localStorage.setItem(APPS_SCRIPT_URL_KEY, scriptUrl);
+            let scriptUrl = localStorage.getItem(APPS_SCRIPT_URL_KEY);
+            
+            if (!scriptUrl) {
+                scriptUrl = prompt('กรุณาระบุ URL ของ Google Apps Script Web App ที่ใช้รับข้อมูล:');
+                if (!scriptUrl) return;
+                localStorage.setItem(APPS_SCRIPT_URL_KEY, scriptUrl.trim());
+            }
 
             showLoading('กำลังรวบรวมข้อมูลเพื่ออัปเดต...');
             try {
