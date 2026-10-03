@@ -1,0 +1,15 @@
+# ข้อมูลจริง / ไฟล์ backup — ห้ามขึ้น GitHub เด็ดขาด (มีข้อมูลสุขภาพพนักงาน)
+*backup*.json
+*.backup.json
+pg-firstaid_*.json
+
+# ระบบเดิมและไฟล์ทำงานระหว่าง redesign (ไม่ต้อง deploy)
+/index.html
+/index-mock.html
+/import_export.html
+/PG First Aid Redesign.html
+
+# อื่นๆ
+node_modules/
+.DS_Store
+Thumbs.db
