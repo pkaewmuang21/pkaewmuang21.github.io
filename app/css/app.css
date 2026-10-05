@@ -341,3 +341,8 @@ mark{background:#FFF0B3;color:inherit;border-radius:3px;padding:0 1px}
 .rtab.on .i{color:#6FDCEA}
 .rtab:focus-visible{box-shadow:var(--focus)}
 @media (max-width: 900px){.rtab{flex:1 1 auto;justify-content:center;height:44px;padding:0 12px;font-size:14px}}
+
+/* รายงานการวินิจฉัย: จัดกลุ่มตาม Disease system */
+.table tr.grp td{background:var(--sunken);font-weight:600;border-top:1px solid var(--line-2)}
+.table tr.grp:hover td{background:var(--sunken)}
+.table tr.sub td:first-child{padding-left:32px}

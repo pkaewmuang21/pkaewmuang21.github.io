@@ -51,6 +51,7 @@ export default {
       preset: p, from, to,
       loc: session.staff.isAdmin ? (params.loc || '') : session.staff.location,
       locations: [], data: null, err: false, token: 0,
+      dxGroup: params.group === 'system', // ตารางการวินิจฉัย: จัดกลุ่มตาม Disease system
     };
     renderShell();
     if (session.staff.isAdmin) {
@@ -85,7 +86,7 @@ async function load() {
 }
 
 function syncParams() {
-  setParams({ tab: st.tab, p: st.preset, from: st.preset === 'custom' ? st.from : '', to: st.preset === 'custom' ? st.to : '', loc: session.staff.isAdmin ? st.loc : '' });
+  setParams({ tab: st.tab, p: st.preset, from: st.preset === 'custom' ? st.from : '', to: st.preset === 'custom' ? st.to : '', loc: session.staff.isAdmin ? st.loc : '', group: st.tab === 'diagnosis' && st.dxGroup ? 'system' : '' });
 }
 
 /* ---------------- layout ---------------- */
@@ -207,10 +208,26 @@ function compute(tab, cards) {
     const total = cards.length;
     return {
       barsTitle: 'จำนวนครั้งตาม Disease system', unit: 'ครั้ง', bars: topBars(systems).map((b) => (b.other ? b : { ...b, color: st.data.sysColor(b.label)[1] })), tableTitle: 'การวินิจฉัย',
-      header: ['ICD-10', 'การวินิจฉัย', 'Disease system', 'จำนวน', 'ร้อยละ'],
-      align: ['num', '', 'sys', 'r', 'r'],
-      rows: list.map((x) => [st.data.icd(x.label)?.code || '-', x.label, sysOf(x.label), x.value, fmtPct(x.value, total)]),
-      total: ['รวม', '', '', total, '100%'],
+      tools: 'dxGroup',
+      ...(st.dxGroup ? (() => {
+        // กลุ่ม = Disease system (มากไปน้อย) → ใต้กลุ่มคือการวินิจฉัยในระบบนั้น (มากไปน้อย)
+        const rows = [], kinds = [];
+        systems.forEach((sys) => {
+          const items = list.filter((x) => sysOf(x.label) === sys.label);
+          rows.push([sys.label, `${items.length} การวินิจฉัย`, sys.value, fmtPct(sys.value, total)]); kinds.push('grp');
+          items.forEach((x) => { rows.push([st.data.icd(x.label)?.code || '-', x.label, x.value, fmtPct(x.value, total)]); kinds.push('item'); });
+        });
+        return {
+          header: ['ICD-10', 'การวินิจฉัย', 'จำนวน', 'ร้อยละ'], align: ['num', '', 'r', 'r'], rows, kinds,
+          total: ['รวม', `${list.length} การวินิจฉัย · ${systems.length} ระบบ`, total, '100%'],
+          countText: `${systems.length} ระบบ · ${list.length} การวินิจฉัย`,
+        };
+      })() : {
+        header: ['ICD-10', 'การวินิจฉัย', 'Disease system', 'จำนวน', 'ร้อยละ'],
+        align: ['num', '', 'sys', 'r', 'r'],
+        rows: list.map((x) => [st.data.icd(x.label)?.code || '-', x.label, sysOf(x.label), x.value, fmtPct(x.value, total)]),
+        total: ['รวม', '', '', total, '100%'],
+      }),
       chart: { title: 'สัดส่วนตาม Disease System', labels: systems.map((x) => x.label), values: systems.map((x) => x.value) },
     };
   }
@@ -292,11 +309,21 @@ function tableCard(r) {
     return html`<td class="${c}">${v}</td>`;
   };
   return html`<section class="card rtable">
-    <div class="rtable-h"><h2>${r.tableTitle}</h2><span class="small muted">${r.rows.length.toLocaleString('th-TH')} แถว</span></div>
+    <div class="rtable-h"><h2>${r.tableTitle}</h2>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        ${r.tools === 'dxGroup' ? html`<div class="seg" role="group" aria-label="รูปแบบตาราง" data-dxgroup>
+          <button type="button" data-g="0" class="${st.dxGroup ? '' : 'on'}">${icon('list', 'sm')}รายการการวินิจฉัย</button>
+          <button type="button" data-g="1" class="${st.dxGroup ? 'on' : ''}">${icon('grid', 'sm')}จัดกลุ่มตาม Disease system</button>
+        </div>` : ''}
+        <span class="small muted">${r.countText || `${r.rows.length.toLocaleString('th-TH')} แถว`}</span>
+      </div>
+    </div>
     <div class="scroll-x">
       <table class="table">
         <thead><tr>${r.header.map((h, i) => html`<th class="${cls(i) === 'r' ? 'r' : cls(i) === 'c' ? 'c' : ''}">${h}</th>`)}</tr></thead>
-        <tbody>${r.rows.map((row) => html`<tr>${row.map(td)}</tr>`)}</tbody>
+        <tbody>${r.rows.map((row, k) => r.kinds?.[k] === 'grp'
+          ? html`<tr class="grp"><td colspan="2">${systemPill(row[0], st.data.sysColor(row[0]))} <span class="small muted" style="font-weight:400">${row[1]}</span></td><td class="r num">${row[2].toLocaleString('th-TH')}</td><td class="r num">${row[3]}</td></tr>`
+          : html`<tr class="${r.kinds ? 'sub' : ''}">${row.map(td)}</tr>`)}</tbody>
         ${r.total ? html`<tfoot><tr>${r.total.map(td)}</tr></tfoot>` : ''}
       </table>
     </div>
@@ -332,6 +359,11 @@ function renderBody() {
     ${kpis(cards)}
     <div class="rgrid">${r.barsTitle ? barsCard(r) : ''}${dailyCard(cards)}</div>
     ${tableCard(r)}`);
+  $('[data-dxgroup]', body)?.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-g]'); if (!b) return;
+    const g = b.dataset.g === '1'; if (g === st.dxGroup) return;
+    st.dxGroup = g; syncParams(); renderBody();
+  });
 }
 
 /* ---------------- export ---------------- */
